@@ -33,3 +33,7 @@ Removed the catch-all `_redirects` rule that Cloudflare rejected with error 1003
 ## Full-bleed icon correction — 2026-11-15
 
 The initial direct crop retained an inset rounded frame. An image edit based on the user-provided logo removed that frame and extended the green field to all square edges so the OS can mask the installed icon. The central ribbon was retained visually, though the edited result is not pixel-identical to the source. Updated 192 px, 512 px and 180 px assets with versioned URLs. Build, lint, typecheck, 13 unit tests, 5 browser E2E tests and 2 production PWA tests passed; all icon URLs are in the service-worker precache.
+
+## Dashboard and update verification — 2026-11-16
+
+At 320 px viewport width, Home showed the label «هزینه‌های ثبت‌شده این ماه» and the demo total «۳۰۵٬۰۰۰ تومان» in a 26 px amount line with no horizontal overflow. A browser assertion now protects this presentation. Lint, typecheck, 13 unit tests, production build, 5 mobile E2E tests, and 3 production PWA tests passed. The new PWA test confirms a service-worker update check on app resume. Actual installed-iOS update behavior remains unverified without a device.

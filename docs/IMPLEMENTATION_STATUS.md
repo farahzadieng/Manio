@@ -15,3 +15,5 @@ Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pa
 PWA icon revision (2026-11-15): replaced the earlier generated concepts with the user-provided logo. Versioned PNG URLs avoid stale icon assets in the PWA cache.
 
 PWA icon frame correction (2026-11-15): edited the user-provided logo to remove its pre-rounded tile/frame and extend the green background edge to edge. The final master is `design/app-icon-fullbleed-master.png`; generated 192/512 px manifest icons and 180 px Apple Touch Icon. The OS applies the icon mask; versioned icon URLs prevent stale cache reuse.
+
+Dashboard and update verification (2026-11-16): confirmed the Home card already displays the selected Jalali month's expense total prominently, including at 320 px viewport width. Added a browser assertion for its label, amount and font size. Added explicit service-worker update checks on registration, foreground resume, return online and hourly while open; the prompt still waits until editors close before becoming visible. Local automated checks pass; installed-iPhone verification remains manual.

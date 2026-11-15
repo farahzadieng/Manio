@@ -20,3 +20,13 @@ npm run preview
 On a new machine, install a Playwright browser with `npx playwright install chromium` before E2E. Local macOS tests can use installed Google Chrome via the Playwright config; CI uses Chromium.
 
 The latest deploy status must be checked in Cloudflare; a local build does not prove deployment. Commit changes locally, then push when authorized to trigger the connected deployment. Do not put financial data or tokens in client build variables.
+
+## Publishing the current local commits
+
+The local `main` branch contains the fix for Cloudflare error 100324: there is no longer a catch-all `_redirects` file. To publish all local commits to the configured GitHub remote, run `git push origin main`. If the Cloudflare project is connected to that repository and automatic production deployments are enabled for `main`, the push starts a new deployment. Check the Cloudflare deployment log and confirm that its commit SHA matches the latest Git commit. If the project uses a manual Wrangler deployment instead, a Git push alone will not deploy it; run the deployment command configured for that project after a successful build.
+
+## Updating an installed PWA
+
+The app uses a versioned Workbox precache and `registerType: "prompt"`. When it detects a new service worker, it shows a Persian update banner; the user chooses when to reload. The banner is hidden while a transaction or obligation editor is open. The app checks for updates on launch, when brought back to the foreground, when network connectivity returns, and hourly while open. A network connection and the **same origin** are required; moving to another hostname creates a different app installation and IndexedDB store.
+
+For each release, verify on an installed phone: (1) deploy and confirm the new commit in Cloudflare, (2) reopen the installed app while online, (3) wait for and tap the update banner, (4) confirm a visible change from the new version, and (5) reopen in airplane mode to check cached assets and local records. Browser E2E tests cover offline reload and update checks, but the installed iOS flow still needs this real-device check. Never clear site data as an update step because that can remove IndexedDB records.

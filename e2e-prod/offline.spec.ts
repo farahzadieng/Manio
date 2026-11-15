@@ -53,3 +53,43 @@ test("manifest points to the user-provided install icons", async ({ page }) => {
     expect(response.headers()["content-type"]).toContain("image/png");
   }
 });
+
+test("installed app checks for a new service worker on resume", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const original = ServiceWorkerRegistration.prototype.update;
+    ServiceWorkerRegistration.prototype.update = function () {
+      (window as Window & { __updateChecks?: number }).__updateChecks =
+        ((window as Window & { __updateChecks?: number }).__updateChecks || 0) +
+        1;
+      return original.call(this);
+    };
+  });
+  await page.goto("/");
+  await page.evaluate(async () => navigator.serviceWorker.ready);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __updateChecks?: number }).__updateChecks || 0,
+      ),
+    )
+    .toBeGreaterThan(0);
+  const before = await page.evaluate(
+    () => (window as Window & { __updateChecks?: number }).__updateChecks || 0,
+  );
+  await page.evaluate(() => {
+    const now = Date.now();
+    Date.now = () => now + 6 * 60_000;
+    window.dispatchEvent(new Event("focus"));
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          (window as Window & { __updateChecks?: number }).__updateChecks || 0,
+      ),
+    )
+    .toBeGreaterThan(before);
+});

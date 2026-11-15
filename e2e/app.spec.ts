@@ -53,6 +53,15 @@ test("mobile layout has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/");
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await expect(page.getByText("هزینه‌های ثبت‌شده این ماه")).toBeVisible();
+  await expect(page.locator(".hero strong")).toHaveText("۳۰۵٬۰۰۰ تومان");
+  expect(
+    await page
+      .locator(".hero strong")
+      .evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      ),
+  ).toBeGreaterThanOrEqual(26);
   for (const name of ["خانه", "تراکنش‌ها", "گزارش‌ها", "تعهدات"]) {
     await page.getByRole("button", { name, exact: true }).last().click();
     const overflow = await page.evaluate(

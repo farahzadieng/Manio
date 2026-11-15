@@ -121,6 +121,19 @@ function App() {
   }, []);
   useEffect(() => {
     let alive = true;
+    let swRegistration: ServiceWorkerRegistration | undefined;
+    let lastUpdateCheck = 0;
+    const checkForUpdate = () => {
+      if (
+        !swRegistration ||
+        document.visibilityState !== "visible" ||
+        !navigator.onLine ||
+        Date.now() - lastUpdateCheck < 5 * 60_000
+      )
+        return;
+      lastUpdateCheck = Date.now();
+      swRegistration.update().catch(() => {});
+    };
     initialize()
       .then(async () => {
         await generateDueInstances(localISO());
@@ -135,7 +148,15 @@ function App() {
         .then(refresh)
         .catch(() => {});
     window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", checkForUpdate);
+    window.addEventListener("online", checkForUpdate);
+    document.addEventListener("visibilitychange", checkForUpdate);
+    const updateInterval = window.setInterval(checkForUpdate, 60 * 60_000);
     const sw = registerSW({
+      onRegisteredSW(_url, registration) {
+        swRegistration = registration;
+        checkForUpdate();
+      },
       onNeedRefresh() {
         setNeedRefresh(true);
       },
@@ -145,6 +166,10 @@ function App() {
     return () => {
       alive = false;
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", checkForUpdate);
+      window.removeEventListener("online", checkForUpdate);
+      document.removeEventListener("visibilitychange", checkForUpdate);
+      window.clearInterval(updateInterval);
     };
   }, [refresh]);
   useEffect(() => {
