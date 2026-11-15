@@ -1,7 +1,81 @@
-import 'fake-indexeddb/auto'
-import {beforeEach,describe,it,expect} from 'vitest'
-import {closeForTests,initialize,get,put,all,reset,db} from './db'
-import {exportBackup,validateBackup,importBackup} from './backup'
-import {seedDemo} from './demo'
-beforeEach(async()=>{await closeForTests();await reset();await initialize()})
-describe('storage and backup',()=>{it('upgrades a version-one database without deleting records',async()=>{await closeForTests();await new Promise<void>((resolve,reject)=>{const drop=indexedDB.deleteDatabase('manio-local');drop.onsuccess=()=>resolve();drop.onerror=()=>reject(drop.error)});await new Promise<void>((resolve,reject)=>{const open=indexedDB.open('manio-local',1);open.onupgradeneeded=()=>{open.result.createObjectStore('settings',{keyPath:'id'})};open.onsuccess=()=>{const tx=open.result.transaction('settings','readwrite');tx.objectStore('settings').put({id:'main',theme:'dark',onboarded:true,demo:false,lastBackupAt:null,currency:'toman'});tx.oncomplete=()=>{open.result.close();resolve()};tx.onerror=()=>reject(tx.error)};open.onerror=()=>reject(open.error)});const upgraded=await db();expect(upgraded.version).toBe(2);expect((await get('settings','main'))?.theme).toBe('dark');expect(upgraded.objectStoreNames.contains('transactions')).toBe(true)});it('persists CRUD and resets',async()=>{const s=(await get('settings','main'))!;await put('settings',{...s,theme:'dark'});expect((await get('settings','main'))?.theme).toBe('dark');await reset();expect(await all('settings')).toEqual([])});it('loads demo once, with searchable notes and multiple months',async()=>{await seedDemo();expect((await all('transactions')).some(t=>t.note.includes('VPN'))).toBe(true);expect(new Set((await all('transactions')).map(t=>t.date.slice(0,7))).size).toBeGreaterThanOrEqual(3);await expect(seedDemo()).rejects.toThrow()});it('round trips and rejects malformed references before mutation',async()=>{await seedDemo();const b=await exportBackup();expect(validateBackup(JSON.parse(JSON.stringify(b))).data.transactions).toHaveLength(b.data.transactions.length);const invalid=structuredClone(b);invalid.data.transactions[0].categoryId=crypto.randomUUID();await expect(importBackup(invalid,'replace')).rejects.toThrow();expect(await all('transactions')).toHaveLength(b.data.transactions.length)});it('deduplicates merge collisions without mutation',async()=>{await seedDemo();const b=await exportBackup();await importBackup(b,'merge');expect(await all('transactions')).toHaveLength(b.data.transactions.length)})})
+import "fake-indexeddb/auto";
+import { beforeEach, describe, it, expect } from "vitest";
+import { closeForTests, initialize, get, put, all, reset, db } from "./db";
+import { exportBackup, validateBackup, importBackup } from "./backup";
+import { seedDemo } from "./demo";
+beforeEach(async () => {
+  await closeForTests();
+  await reset();
+  await initialize();
+});
+describe("storage and backup", () => {
+  it("upgrades a version-one database without deleting records", async () => {
+    await closeForTests();
+    await new Promise<void>((resolve, reject) => {
+      const drop = indexedDB.deleteDatabase("manio-local");
+      drop.onsuccess = () => resolve();
+      drop.onerror = () => reject(drop.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open("manio-local", 1);
+      open.onupgradeneeded = () => {
+        open.result.createObjectStore("settings", { keyPath: "id" });
+      };
+      open.onsuccess = () => {
+        const tx = open.result.transaction("settings", "readwrite");
+        tx.objectStore("settings").put({
+          id: "main",
+          theme: "dark",
+          onboarded: true,
+          demo: false,
+          lastBackupAt: null,
+          currency: "toman",
+        });
+        tx.oncomplete = () => {
+          open.result.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      };
+      open.onerror = () => reject(open.error);
+    });
+    const upgraded = await db();
+    expect(upgraded.version).toBe(2);
+    expect((await get("settings", "main"))?.theme).toBe("dark");
+    expect(upgraded.objectStoreNames.contains("transactions")).toBe(true);
+  });
+  it("persists CRUD and resets", async () => {
+    const s = (await get("settings", "main"))!;
+    await put("settings", { ...s, theme: "dark" });
+    expect((await get("settings", "main"))?.theme).toBe("dark");
+    await reset();
+    expect(await all("settings")).toEqual([]);
+  });
+  it("loads demo once, with searchable notes and multiple months", async () => {
+    await seedDemo();
+    expect(
+      (await all("transactions")).some((t) => t.note.includes("VPN")),
+    ).toBe(true);
+    expect(
+      new Set((await all("transactions")).map((t) => t.date.slice(0, 7))).size,
+    ).toBeGreaterThanOrEqual(3);
+    await expect(seedDemo()).rejects.toThrow();
+  });
+  it("round trips and rejects malformed references before mutation", async () => {
+    await seedDemo();
+    const b = await exportBackup();
+    expect(
+      validateBackup(JSON.parse(JSON.stringify(b))).data.transactions,
+    ).toHaveLength(b.data.transactions.length);
+    const invalid = structuredClone(b);
+    invalid.data.transactions[0].categoryId = crypto.randomUUID();
+    await expect(importBackup(invalid, "replace")).rejects.toThrow();
+    expect(await all("transactions")).toHaveLength(b.data.transactions.length);
+  });
+  it("deduplicates merge collisions without mutation", async () => {
+    await seedDemo();
+    const b = await exportBackup();
+    await importBackup(b, "merge");
+    expect(await all("transactions")).toHaveLength(b.data.transactions.length);
+  });
+});
