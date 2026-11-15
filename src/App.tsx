@@ -292,7 +292,7 @@ function App() {
     return (
       <main className="onboard">
         <div className="brand-mark">
-          <img src="/icons/manio-192.png" alt="نشان مانیو" />
+          <img src="/icons/manio-user-192.png" alt="نشان مانیو" />
         </div>
         <span className="eyebrow">دفتر شخصی شما</span>
         <h1>
