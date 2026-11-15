@@ -12,6 +12,6 @@ Next: commit the fix, then the user can push or redeploy using their existing Cl
 
 Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pages has native SPA fallback without a top-level 404 page. Replaced Vazirmatn with the user-provided local Arad variable WOFF2 font; no runtime font request to a third party.
 
-PWA icon update (2026-11-15): cropped the user-provided gold-and-green ribbon logo directly from its 1024 px source without redrawing the mark. Added 192 px and 512 px manifest icons and a 180 px Apple Touch Icon. The cropped source is in `design/`; icons are local and precached.
-
 PWA icon revision (2026-11-15): replaced the earlier generated concepts with the user-provided logo. Versioned PNG URLs avoid stale icon assets in the PWA cache.
+
+PWA icon frame correction (2026-11-15): edited the user-provided logo to remove its pre-rounded tile/frame and extend the green background edge to edge. The final master is `design/app-icon-fullbleed-master.png`; generated 192/512 px manifest icons and 180 px Apple Touch Icon. The OS applies the icon mask; versioned icon URLs prevent stale cache reuse.

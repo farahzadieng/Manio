@@ -44,9 +44,9 @@ test("manifest points to the user-provided install icons", async ({ page }) => {
     "512x512",
   ]);
   for (const path of [
-    "/icons/manio-user-192.png",
-    "/icons/manio-user-512.png",
-    "/icons/apple-touch-icon-user-180.png",
+    "/icons/manio-fullbleed-192.png",
+    "/icons/manio-fullbleed-512.png",
+    "/icons/apple-touch-icon-fullbleed-180.png",
   ]) {
     const response = await page.request.get(path);
     expect(response.ok(), path).toBe(true);

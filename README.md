@@ -21,6 +21,6 @@ Amounts are positive safe integer tomans (at most 9,007,199,254,740,991 each). S
 
 ## Architecture
 
-`src/lib/domain.ts` contains validation and date/report/search logic. `src/lib/db.ts` owns IndexedDB stores and migration. `src/lib/backup.ts` handles JSON and CSV. `src/components/DatePicker.tsx` isolates the Jalali picker. `src/App.tsx` contains the mobile screens. The bundled Arad variable font and user-provided app icon are served locally from the app assets; no runtime CDN assets are required. The full-resolution icon source is in `design/app-icon-user-cropped.png`.
+`src/lib/domain.ts` contains validation and date/report/search logic. `src/lib/db.ts` owns IndexedDB stores and migration. `src/lib/backup.ts` handles JSON and CSV. `src/components/DatePicker.tsx` isolates the Jalali picker. `src/App.tsx` contains the mobile screens. The bundled Arad variable font and user-provided app icon are served locally from the app assets; no runtime CDN assets are required. The full-resolution icon source is in `design/app-icon-fullbleed-master.png`.
 
 See `docs/DEPLOYMENT.md` and `docs/QA_REPORT.md`.

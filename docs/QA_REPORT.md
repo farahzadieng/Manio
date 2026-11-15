@@ -30,6 +30,6 @@ A browser PWA cannot call EventKit or guarantee scheduled notifications while cl
 
 Removed the catch-all `_redirects` rule that Cloudflare rejected with error 100324. A fresh build contains no `dist/_redirects`. Replaced Vazirmatn package assets with the user-provided `AradVF.woff2`; build output contains one local Arad font asset, the service-worker precache references it, and the production browser test confirms the font loads and remains available through offline reload. Lint, typecheck, 13 unit tests, 5 browser E2E tests, build, and production offline E2E passed after this change. Cloudflare deployment itself was not retried from this environment.
 
-## User-provided icon crop — 2026-11-15
+## Full-bleed icon correction — 2026-11-15
 
-Cropped the supplied 1024 px logo directly to a 700 px square around its central green tile; the ribbon artwork was not redrawn. Generated 192 px and 512 px manifest icons and a 180 px Apple Touch Icon from that crop. Build, lint, typecheck, 13 unit tests, 5 browser E2E tests, and 2 production PWA tests passed. All three icon URLs are included in the service-worker precache.
+The initial direct crop retained an inset rounded frame. An image edit based on the user-provided logo removed that frame and extended the green field to all square edges so the OS can mask the installed icon. The central ribbon was retained visually, though the edited result is not pixel-identical to the source. Updated 192 px, 512 px and 180 px assets with versioned URLs. Build, lint, typecheck, 13 unit tests, 5 browser E2E tests and 2 production PWA tests passed; all icon URLs are in the service-worker precache.
