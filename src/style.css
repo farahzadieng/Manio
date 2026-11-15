@@ -1,10 +1,13 @@
-@import "@fontsource/vazirmatn/400.css";
-@import "@fontsource/vazirmatn/500.css";
-@import "@fontsource/vazirmatn/600.css";
-@import "@fontsource/vazirmatn/700.css";
+@font-face {
+  font-family: "Arad";
+  src: url("./assets/AradVF.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 @import "tailwindcss";
 :root {
-  font-family: Vazirmatn, Tahoma, sans-serif;
+  font-family: "Arad", Tahoma, sans-serif;
   color: #26342d;
   background: #f8f6f1;
   --bg: #f8f6f1;

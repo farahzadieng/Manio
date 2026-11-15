@@ -6,6 +6,8 @@ Decisions: Empty target directory became a static React/Vite app. IndexedDB is t
 
 Completed: app shell, themes, touch-safe navigation, PWA assets and update prompt, stores/indexes/migration, empty and demo onboarding, transaction CRUD/search/filter/repeat, reports with periods/filters/trend/comparison, obligations/recurrence/completion, settings management, JSON/CSV export and JSON import/reset, CI, tests and docs.
 
-External boundaries: no actual iPhone or installed iOS PWA check; no Cloudflare deployment or GitHub push. Cloudflare project credentials and push authorization were not established in this session. `gh` is not installed locally. The intended remote exists and has no HEAD commit.
+External boundaries: no actual iPhone or installed iOS PWA check. The user reported that Cloudflare deployment failed on the existing `_redirects` rule. The local branch tracks `origin/main`; this fix is to be committed locally for the user to deploy. No successful Cloudflare deployment is verified here.
 
-Next: review the local release commit, authorize push, connect Cloudflare Pages to the repository, and execute the manual installed-iPhone checklist in `QA_REPORT.md`.
+Next: commit the fix, then the user can push or redeploy using their existing Cloudflare setup and perform the manual installed-iPhone checklist in `QA_REPORT.md`.
+
+Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pages has native SPA fallback without a top-level 404 page. Replaced Vazirmatn with the user-provided local Arad variable WOFF2 font; no runtime font request to a third party.

@@ -25,3 +25,7 @@ Browser emulation and screenshots at 320 px verified light Home and dark Reports
 ## Limits
 
 A browser PWA cannot call EventKit or guarantee scheduled notifications while closed; calendar action copies details for a user to paste. No `.ics` download is offered. Cloudflare Pages alone does not provide a scheduled push service. IndexedDB can be removed by browser/OS cleanup and is scoped to a device and hostname. No actual-device check or Cloudflare deployment is claimed.
+
+## Deployment and font fix — 2026-11-15
+
+Removed the catch-all `_redirects` rule that Cloudflare rejected with error 100324. A fresh build contains no `dist/_redirects`. Replaced Vazirmatn package assets with the user-provided `AradVF.woff2`; build output contains one local Arad font asset, the service-worker precache references it, and the production browser test confirms the font loads and remains available through offline reload. Lint, typecheck, 13 unit tests, 5 browser E2E tests, build, and production offline E2E passed after this change. Cloudflare deployment itself was not retried from this environment.

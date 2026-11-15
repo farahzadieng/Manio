@@ -11,7 +11,6 @@ export default defineConfig({
       includeAssets: [
         "icons/icon.svg",
         "icons/icon.png",
-        "licenses/Vazirmatn-LICENSE.txt",
       ],
       manifest: {
         name: "مانیو — دفتر خرج شخصی",
