@@ -11,3 +11,5 @@ External boundaries: no actual iPhone or installed iOS PWA check. The user repor
 Next: commit the fix, then the user can push or redeploy using their existing Cloudflare setup and perform the manual installed-iPhone checklist in `QA_REPORT.md`.
 
 Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pages has native SPA fallback without a top-level 404 page. Replaced Vazirmatn with the user-provided local Arad variable WOFF2 font; no runtime font request to a third party.
+
+PWA icon update (2026-11-15): generated a new journal/leaf mark, added 192 px and 512 px manifest icons and a 180 px Apple Touch Icon, and retained the master PNG in `design/`. The icons are local and included in the service-worker precache.

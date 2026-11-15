@@ -28,3 +28,28 @@ test("production PWA reloads offline after first cache", async ({
   await expect(page.getByRole("heading", { name: "خانه" })).toBeVisible();
   await expect(page.getByText("۳۰۵٬۰۰۰ تومان")).toBeVisible();
 });
+
+test("manifest points to the generated install icons", async ({ page }) => {
+  await page.goto("/");
+  const manifest = await page.evaluate(async () => {
+    const link = document.querySelector<HTMLLinkElement>(
+      'link[rel="manifest"]',
+    );
+    if (!link) throw new Error("manifest link missing");
+    return fetch(link.href).then((response) => response.json());
+  });
+  expect(manifest.display).toBe("standalone");
+  expect(manifest.icons.map((icon: { sizes: string }) => icon.sizes)).toEqual([
+    "192x192",
+    "512x512",
+  ]);
+  for (const path of [
+    "/icons/manio-192.png",
+    "/icons/manio-512.png",
+    "/icons/apple-touch-icon-180.png",
+  ]) {
+    const response = await page.request.get(path);
+    expect(response.ok(), path).toBe(true);
+    expect(response.headers()["content-type"]).toContain("image/png");
+  }
+});

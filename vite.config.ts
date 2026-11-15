@@ -9,8 +9,9 @@ export default defineConfig({
     VitePWA({
       registerType: "prompt",
       includeAssets: [
-        "icons/icon.svg",
-        "icons/icon.png",
+        "icons/manio-192.png",
+        "icons/manio-512.png",
+        "icons/apple-touch-icon-180.png",
       ],
       manifest: {
         name: "مانیو — دفتر خرج شخصی",
@@ -23,15 +24,15 @@ export default defineConfig({
         theme_color: "#F8F6F1",
         icons: [
           {
-            src: "/icons/icon.png",
-            sizes: "512x512",
+            src: "/icons/manio-192.png",
+            sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable",
+            purpose: "any",
           },
           {
-            src: "/icons/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
+            src: "/icons/manio-512.png",
+            sizes: "512x512",
+            type: "image/png",
             purpose: "any",
           },
         ],
