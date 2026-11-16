@@ -53,6 +53,15 @@ select,
 textarea {
   font: inherit;
 }
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+.amount-input {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 button {
   cursor: pointer;
 }
@@ -398,7 +407,7 @@ textarea:focus-visible {
   min-width: 0;
   flex: 1;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 16px;
 }
 .filters {
   display: flex;
@@ -418,6 +427,10 @@ textarea:focus-visible {
   min-height: 42px;
   padding: 7px 9px;
   font-size: 12px;
+}
+.filters > select,
+.filters > input {
+  font-size: 16px;
 }
 .text-button {
   border: 0;

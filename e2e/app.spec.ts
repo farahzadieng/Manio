@@ -8,6 +8,7 @@ test("empty start, create/edit/repeat/delete expense and search", async ({
   await expect(page.getByRole("heading", { name: "خانه" })).toBeVisible();
   await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
   await page.getByLabel("مبلغ (تومان)").fill("12345");
+  await expect(page.getByLabel("مبلغ (تومان)")).toHaveValue("۱۲٬۳۴۵");
   await page
     .getByRole("combobox", { name: "دسته" })
     .selectOption({ label: "🍽️ خوراک" });
@@ -120,4 +121,55 @@ test("income and optional obligation transaction remain separate records", async
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   await expect(page.getByText("۸ نتیجه")).toBeVisible();
+});
+
+test("editable fields have iPhone-safe text size and obligations group amounts", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
+  const amount = page.getByLabel("مبلغ (تومان)");
+  await amount.pressSequentially("40000", { delay: 30 });
+  await expect(amount).toHaveValue("۴۰٬۰۰۰");
+  await amount.evaluate((element: HTMLInputElement) =>
+    element.setSelectionRange(0, 0),
+  );
+  await amount.press("2");
+  await expect(amount).toHaveValue("۲۴۰٬۰۰۰");
+  expect(
+    await amount.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    ),
+  ).toBeGreaterThanOrEqual(16);
+  const undersizedEditorFields = await page
+    .locator(".editor input, .editor select, .editor textarea")
+    .evaluateAll((elements) =>
+      elements
+        .filter(
+          (element) =>
+            Number.parseFloat(getComputedStyle(element).fontSize) < 16,
+        )
+        .map((element) => element.outerHTML),
+    );
+  expect(undersizedEditorFields).toEqual([]);
+  await page.getByRole("button", { name: "بستن" }).click();
+  await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
+  const undersizedSearchFields = await page
+    .locator(".search input, .filters select")
+    .evaluateAll((elements) =>
+      elements
+        .filter(
+          (element) =>
+            Number.parseFloat(getComputedStyle(element).fontSize) < 16,
+        )
+        .map((element) => element.outerHTML),
+    );
+  expect(undersizedSearchFields).toEqual([]);
+  await page.getByRole("button", { name: "تعهدات", exact: true }).click();
+  await page.getByRole("button", { name: "افزودن" }).click();
+  const obligationAmount = page.getByLabel("مبلغ (اختیاری)");
+  await obligationAmount.fill("2500000");
+  await expect(obligationAmount).toHaveValue("۲٬۵۰۰٬۰۰۰");
 });

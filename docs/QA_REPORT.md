@@ -37,3 +37,7 @@ The initial direct crop retained an inset rounded frame. An image edit based on 
 ## Dashboard and update verification — 2026-11-16
 
 At 320 px viewport width, Home showed the label «هزینه‌های ثبت‌شده این ماه» and the demo total «۳۰۵٬۰۰۰ تومان» in a 26 px amount line with no horizontal overflow. A browser assertion now protects this presentation. Lint, typecheck, 13 unit tests, production build, 5 mobile E2E tests, and 3 production PWA tests passed. The new PWA test confirms a service-worker update check on app resume. Actual installed-iOS update behavior remains unverified without a device.
+
+## Form input and manual update check — 2026-11-16
+
+All editable text controls were raised to at least 16 px in CSS without disabling pinch zoom. Transaction and obligation amount fields now group digits live (for example `40000` → `۴۰٬۰۰۰`) while keeping stored amounts as integer tomans. Automated checks: 16 unit tests, 6 mobile browser E2E tests, 4 production PWA tests, lint, typecheck and build passed. Browser tests verify grouped input, middle-of-number editing, form control font sizes and the Settings update-check action. Actual Safari focus zoom and installed-PWA update activation still require the manual iPhone checklist.

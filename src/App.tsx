@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Home,
   List,
@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  RefreshCw,
   X,
 } from "lucide-react";
 import { registerSW } from "virtual:pwa-register";
@@ -58,6 +59,8 @@ import {
 import { seedDemo, seedEmptyCategories } from "./lib/demo";
 import { generateDueInstances } from "./lib/recurrence";
 import { DatePicker } from "./components/DatePicker";
+import { AmountInput } from "./components/AmountInput";
+import { formatAmountInput } from "./lib/amount-input";
 type Tab = "home" | "transactions" | "reports" | "obligations" | "settings";
 const labels = {
   home: "خانه",
@@ -112,6 +115,9 @@ function App() {
   const [updateSW, setUpdateSW] = useState<
     ((reload?: boolean) => Promise<void>) | null
   >(null);
+  const swRegistrationRef = useRef<ServiceWorkerRegistration | null>(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateMessage, setUpdateMessage] = useState("");
   const refresh = useCallback(async () => {
     setRows(await all("transactions"));
     setCategories(await all("categories"));
@@ -119,6 +125,37 @@ function App() {
     setObligations(await all("obligations"));
     setSettings((await all("settings"))[0] || null);
   }, []);
+  const checkUpdateNow = async () => {
+    if (!navigator.onLine) {
+      setUpdateMessage("برای بررسی نسخه تازه به اینترنت وصل شوید.");
+      return;
+    }
+    if (!("serviceWorker" in navigator)) {
+      setUpdateMessage("این مرورگر از به‌روزرسانی PWA پشتیبانی نمی‌کند.");
+      return;
+    }
+    setCheckingUpdate(true);
+    try {
+      const registration =
+        swRegistrationRef.current ||
+        (await navigator.serviceWorker.getRegistration());
+      if (!registration) {
+        setUpdateMessage("بررسی نسخه پس از نصب برنامه در مرورگر فعال می‌شود.");
+        return;
+      }
+      if (!registration.waiting) await registration.update();
+      if (registration.waiting) setNeedRefresh(true);
+      setUpdateMessage(
+        registration.waiting
+          ? "نسخه تازه آماده است؛ دکمه به‌روزرسانی را بزنید."
+          : "بررسی انجام شد. اگر نسخه تازه‌ای پیدا شود، پیام به‌روزرسانی ظاهر می‌شود.",
+      );
+    } catch {
+      setUpdateMessage("بررسی نسخه انجام نشد؛ اتصال اینترنت را بررسی کنید.");
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
   useEffect(() => {
     let alive = true;
     let swRegistration: ServiceWorkerRegistration | undefined;
@@ -155,6 +192,7 @@ function App() {
     const sw = registerSW({
       onRegisteredSW(_url, registration) {
         swRegistration = registration;
+        swRegistrationRef.current = registration || null;
         checkForUpdate();
       },
       onNeedRefresh() {
@@ -884,6 +922,9 @@ function App() {
             }}
             onImport={onImport}
             onReset={erase}
+            onCheckUpdate={checkUpdateNow}
+            checkingUpdate={checkingUpdate}
+            updateMessage={updateMessage}
           />
         )}
       </main>
@@ -1054,11 +1095,13 @@ function TransactionEditor({
   const template = row || initial.duplicateOf;
   const [kind, setKind] = useState(initial.kind);
   const [amountText, setAmountText] = useState(
-    template
-      ? String(template.amountTomans)
-      : initial.presetAmount
-        ? String(initial.presetAmount)
-        : "",
+    formatAmountInput(
+      template
+        ? String(template.amountTomans)
+        : initial.presetAmount
+          ? String(initial.presetAmount)
+          : "",
+    ) ?? "",
   );
   const [categoryId, setCategoryId] = useState(
     template?.categoryId || initial.presetCategoryId || "",
@@ -1156,11 +1199,10 @@ function TransactionEditor({
         </div>
         <label>
           مبلغ (تومان)
-          <input
+          <AmountInput
             autoFocus
-            inputMode="numeric"
             value={amountText}
-            onChange={(e) => setAmountText(e.target.value)}
+            onChange={setAmountText}
             placeholder="مثلاً ۱۲۵٬۰۰۰"
           />
         </label>
@@ -1420,7 +1462,7 @@ function ObligationEditor({
   const [type, setType] = useState<Obligation["type"]>(initial?.type || "debt");
   const [title, setTitle] = useState(initial?.title || "");
   const [amountText, setAmountText] = useState(
-    initial?.amountTomans?.toString() || "",
+    formatAmountInput(initial?.amountTomans?.toString() || "") ?? "",
   );
   const [counterparty, setCounterparty] = useState(initial?.counterparty || "");
   const [date, setDate] = useState(initial?.dueDate || localISO());
@@ -1511,11 +1553,7 @@ function ObligationEditor({
         </label>
         <label>
           مبلغ (اختیاری)
-          <input
-            inputMode="numeric"
-            value={amountText}
-            onChange={(e) => setAmountText(e.target.value)}
-          />
+          <AmountInput value={amountText} onChange={setAmountText} />
         </label>
         <label>
           طرف حساب (اختیاری)
@@ -1583,6 +1621,9 @@ function SettingsScreen({
   onExport,
   onImport,
   onReset,
+  onCheckUpdate,
+  checkingUpdate,
+  updateMessage,
 }: {
   settings: Settings;
   categories: Category[];
@@ -1593,6 +1634,9 @@ function SettingsScreen({
   onExport: () => Promise<void>;
   onImport: (f: File) => Promise<void>;
   onReset: () => Promise<void>;
+  onCheckUpdate: () => Promise<void>;
+  checkingUpdate: boolean;
+  updateMessage: string;
 }) {
   const [name, setName] = useState("");
   const [emoji, setEmoji] = useState("🧾");
@@ -1625,6 +1669,14 @@ function SettingsScreen({
             </button>
           ))}
         </div>
+      </div>
+      <Section title="به‌روزرسانی برنامه" />
+      <div className="settings-card stack">
+        <button onClick={onCheckUpdate} disabled={checkingUpdate}>
+          <RefreshCw size={18} />
+          {checkingUpdate ? "در حال بررسی…" : "بررسی نسخه تازه"}
+        </button>
+        {updateMessage && <small role="status">{updateMessage}</small>}
       </div>
       <Section title="دسته‌ها" />
       <div className="settings-card">

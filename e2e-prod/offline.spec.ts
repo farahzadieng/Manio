@@ -93,3 +93,13 @@ test("installed app checks for a new service worker on resume", async ({
     )
     .toBeGreaterThan(before);
 });
+
+test("settings can manually request an update check", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.evaluate(async () => navigator.serviceWorker.ready);
+  await page.getByRole("button", { name: "تنظیمات" }).click();
+  await page.getByRole("button", { name: "بررسی نسخه تازه" }).click();
+  await expect(page.getByRole("status")).toContainText("بررسی انجام شد");
+  await expect(page.getByRole("heading", { name: "تنظیمات" })).toBeVisible();
+});
