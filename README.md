@@ -4,7 +4,7 @@ Manio is a Persian, right-to-left personal expense journal. It helps you record 
 
 ## Use the hosted app
 
-The intended public address is [manio.luminiastudio.com](https://manio.luminiastudio.com). Once its DNS and deployment are active, open it on your phone or computer. Choose an empty journal or try the demo on first launch. On iPhone, use Safari's **Share → Add to Home Screen** to install it as a PWA. Once the app has loaded and its assets have been cached, it can reopen offline.
+Open [manio.luminiastudio.ir](https://manio.luminiastudio.ir) on your phone or computer. Choose an empty journal or try the demo on first launch. On iPhone, use Safari's **Share → Add to Home Screen** to install it as a PWA. Once the app has loaded and its assets have been cached, it can reopen offline.
 
 Add expenses and income from the home screen. Pick a category, date, and optional payment source; amounts are stored as integer Iranian tomans. The newest active payment source is selected automatically for a new expense and can be changed. Star a transaction while creating or editing it to place a reusable shortcut on Home. Selecting that shortcut starts a **new** transaction with the same amount, category, source, necessity, and note, dated today. Reports use Jalali periods and local filters. Obligations track debts, receivables, planned payments, and reminders separately from transactions.
 
