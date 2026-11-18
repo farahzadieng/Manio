@@ -50,6 +50,7 @@ export const transactionSchema = z.object({
   paymentSourceName: z.string().nullable(),
   necessity: z.enum(["necessary", "nonessential"]).nullable(),
   note,
+  starred: z.boolean().default(false),
 });
 export const obligationSchema = z.object({
   ...base,
@@ -137,6 +138,16 @@ export function jalaliMonthRange(y: number, m: number): [string, string] {
 export const persianNumber = (n: number) =>
   new Intl.NumberFormat("fa-IR").format(n);
 export const money = (n: number) => `${persianNumber(n)} تومان`;
+export function latestActiveSourceId(sources: PaymentSource[]) {
+  return (
+    [...sources]
+      .filter((source) => source.active)
+      .sort(
+        (a, b) =>
+          b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id),
+      )[0]?.id || ""
+  );
+}
 export function parseAmount(input: string) {
   const digits = input
     .replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776))

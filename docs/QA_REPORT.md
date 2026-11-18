@@ -41,3 +41,7 @@ At 320 px viewport width, Home showed the label «هزینه‌های ثبت‌�
 ## Form input and manual update check — 2026-11-16
 
 All editable text controls were raised to at least 16 px in CSS without disabling pinch zoom. Transaction and obligation amount fields now group digits live (for example `40000` → `۴۰٬۰۰۰`) while keeping stored amounts as integer tomans. Automated checks: 16 unit tests, 6 mobile browser E2E tests, 4 production PWA tests, lint, typecheck and build passed. Browser tests verify grouped input, middle-of-number editing, form control font sizes and the Settings update-check action. Actual Safari focus zoom and installed-PWA update activation still require the manual iPhone checklist.
+
+## Version 1.0 update — 2026-11-19
+
+Lint, typecheck, 19 unit/integration tests, production build, 7 mobile Chromium E2E tests and 4 production PWA tests passed. New checks cover v2→v3 transaction migration, old backup import, newest active source selection, Settings version display, starring and repeating a transaction with a new record, and retained offline reload/update behavior. The initial browser run connected to an unrelated app already listening on port 4173; the Playwright config now uses port 4187 with strict binding, and the rerun passed. `curl` could not resolve `manio.luminiastudio.com` in this environment, so the hosted app was not verified. Real installed-iPhone behavior is still covered by the manual checklist above, not claimed as tested.

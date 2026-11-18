@@ -9,8 +9,8 @@ export default defineConfig({
     serviceWorkers: "allow",
   },
   webServer: {
-    command: "npm run preview -- --port 4175",
+    command: "npm run preview -- --port 4175 --strictPort",
     url: "http://localhost:4175",
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
   },
 });

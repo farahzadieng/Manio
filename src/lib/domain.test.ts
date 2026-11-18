@@ -12,6 +12,7 @@ import {
   localISO,
   monthlyTrend,
   type Transaction,
+  latestActiveSourceId,
 } from "./domain";
 const base: Transaction = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -25,6 +26,7 @@ const base: Transaction = {
   paymentSourceName: null,
   necessity: "necessary",
   note: "VPN برای خانه",
+  starred: false,
   createdAt: "x",
   updatedAt: "x",
 };
@@ -83,5 +85,23 @@ describe("local domain", () => {
   });
   it("uses local civil dates", () => {
     expect(localISO(new Date(2026, 0, 1, 23, 59))).toBe("2026-01-01");
+  });
+  it("defaults to the newest active source by creation time", () => {
+    const source = (id: string, createdAt: string, active = true) => ({
+      id,
+      createdAt,
+      updatedAt: createdAt,
+      active,
+      name: id,
+      kind: "card" as const,
+      color: "#285646",
+    });
+    expect(
+      latestActiveSourceId([
+        source("old", "2026-01-01T00:00:00.000Z"),
+        source("new", "2026-02-01T00:00:00.000Z"),
+        source("archived", "2026-03-01T00:00:00.000Z", false),
+      ]),
+    ).toBe("new");
   });
 });

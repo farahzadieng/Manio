@@ -173,3 +173,55 @@ test("editable fields have iPhone-safe text size and obligations group amounts",
   await obligationAmount.fill("2500000");
   await expect(obligationAmount).toHaveValue("۲٬۵۰۰٬۰۰۰");
 });
+
+test("version, newest payment source and starred repeat shortcut", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.getByRole("button", { name: "تنظیمات" }).click();
+  await expect(page.getByText("نسخه برنامه:")).toContainText("۱٫۰");
+  await page.getByLabel("نام منبع تازه").fill("کارت تازه");
+  await page
+    .locator(".inline-form")
+    .last()
+    .getByRole("button", { name: "افزودن" })
+    .click();
+  await page.getByRole("button", { name: "بازگشت به خانه" }).click();
+  await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
+  await expect(page.getByRole("combobox", { name: "منبع پرداخت" })).toHaveValue(
+    await page
+      .getByRole("combobox", { name: "منبع پرداخت" })
+      .locator("option", { hasText: "کارت تازه" })
+      .getAttribute("value"),
+  );
+  await page.getByLabel("مبلغ (تومان)").fill("40000");
+  await page
+    .getByRole("combobox", { name: "دسته" })
+    .selectOption({ label: "🍽️ خوراک" });
+  await page
+    .getByRole("button", { name: "افزودن به تراکنش‌های پرتکرار" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "ذخیره‌شده در تراکنش‌های پرتکرار" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
+  await page
+    .getByRole("button", { name: /ثبت دوباره خوراک، ۴۰٬۰۰۰ تومان/ })
+    .click();
+  await expect(page.getByLabel("مبلغ (تومان)")).toHaveValue("۴۰٬۰۰۰");
+  await expect(
+    page.getByRole("combobox", { name: "دسته" }).locator("option:checked"),
+  ).toHaveText("🍽️ خوراک");
+  await expect(
+    page
+      .getByRole("combobox", { name: "منبع پرداخت" })
+      .locator("option:checked"),
+  ).toHaveText("کارت تازه");
+  await expect(
+    page.getByRole("button", { name: "افزودن به تراکنش‌های پرتکرار" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
+  await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
+  await expect(page.getByText("۸ نتیجه")).toBeVisible();
+});

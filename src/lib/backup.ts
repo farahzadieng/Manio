@@ -34,7 +34,7 @@ export async function exportBackup(): Promise<Backup> {
 }
 export function validateBackup(raw: unknown): Backup {
   const b = backupSchema.parse(raw);
-  if (b.data.metadata[0]?.schemaVersion > 2)
+  if (b.data.metadata[0]?.schemaVersion > 3)
     throw new Error("نسخه داده‌ها جدیدتر از برنامه است");
   if (b.data.settings.length !== 1 || b.data.metadata.length !== 1)
     throw new Error("تنظیمات یا فراداده پشتیبان ناقص است");
@@ -69,6 +69,12 @@ export function validateBackup(raw: unknown): Backup {
 export async function importBackup(raw: unknown, mode: "replace" | "merge") {
   const b = validateBackup(raw);
   if (mode === "replace") {
+    if (b.data.metadata[0].schemaVersion < 3)
+      b.data.metadata[0] = {
+        ...b.data.metadata[0],
+        schemaVersion: 3,
+        migratedAt: new Date().toISOString(),
+      };
     await atomicReplace(b.data, "replace");
     return;
   }

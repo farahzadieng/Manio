@@ -82,6 +82,7 @@ export async function seedDemo() {
       paymentSourceName: "کارت روزمره",
       necessity: categories[cat - 1].defaultNecessity,
       note,
+      starred: i === 0 || i === 2,
       createdAt: now,
       updatedAt: now,
     }),
@@ -133,7 +134,7 @@ export async function seedDemo() {
       metadata: [
         {
           id: "main",
-          schemaVersion: 2,
+          schemaVersion: 3,
           seedProvenance: "bundled-demo-v1",
           migratedAt: now,
         },

@@ -6,7 +6,7 @@ import {
   type Settings,
 } from "./domain";
 const NAME = "manio-local";
-const VERSION = 2;
+const VERSION = 3;
 export const stores: TableName[] = [
   "paymentSources",
   "categories",
@@ -21,7 +21,7 @@ export function db(): Promise<IDBDatabase> {
   if (!connection)
     connection = new Promise((resolve, reject) => {
       const request = indexedDB.open(NAME, VERSION);
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event) => {
         const d = request.result;
         for (const name of stores)
           if (!d.objectStoreNames.contains(name))
@@ -38,6 +38,16 @@ export function db(): Promise<IDBDatabase> {
         index("obligations", "dueDate", "dueDate");
         index("obligations", "status", "status");
         index("recurrenceRules", "templateId", "templateId");
+        if (event.oldVersion < 3) {
+          const cursor = tx.objectStore("transactions").openCursor();
+          cursor.onsuccess = () => {
+            const current = cursor.result;
+            if (!current) return;
+            if (typeof current.value.starred !== "boolean")
+              current.update({ ...current.value, starred: false });
+            current.continue();
+          };
+        }
       };
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => {

@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Trash2,
   Copy,
+  Star,
   Download,
   Upload,
   ChevronLeft,
@@ -47,7 +48,9 @@ import {
   type Filters,
   note,
   monthlyTrend,
+  latestActiveSourceId,
 } from "./lib/domain";
+import { version as packageVersion } from "../package.json";
 import {
   exportBackup,
   importBackup,
@@ -281,28 +284,10 @@ function App() {
       }
       return { m, y };
     });
-  const frequent = Object.values(
-    rows
-      .filter((t) => t.kind === "expense")
-      .reduce<
-        Record<
-          string,
-          { id: string; name: string; emoji: string; count: number }
-        >
-      >((acc, t) => {
-        const x = acc[t.categoryId] || {
-          id: t.categoryId,
-          name: t.categoryName,
-          emoji: t.categoryEmoji,
-          count: 0,
-        };
-        x.count++;
-        acc[t.categoryId] = x;
-        return acc;
-      }, {}),
-  )
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
+  const frequent = rows
+    .filter((t) => t.starred)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 5);
   const saveSetting = async (next: Settings) => {
     await put("settings", next);
     setSettings(next);
@@ -459,16 +444,18 @@ function App() {
             )}
             {frequent.length > 0 && (
               <>
-                <Section title="هزینه‌های پرتکرار" />
+                <Section title="تراکنش‌های پرتکرار" />
                 <div className="chips">
                   {frequent.map((f) => (
                     <button
                       key={f.id}
                       onClick={() =>
-                        setEditor({ kind: "expense", presetCategoryId: f.id })
+                        setEditor({ kind: f.kind, duplicateOf: f })
                       }
+                      aria-label={`ثبت دوباره ${f.categoryName}، ${money(f.amountTomans)}`}
                     >
-                      {f.emoji} {f.name} +
+                      <Star size={15} fill="currentColor" /> {f.categoryEmoji}{" "}
+                      {f.categoryName} · {money(f.amountTomans)}
                     </button>
                   ))}
                 </div>
@@ -946,6 +933,13 @@ function App() {
       </nav>
       {editor && (
         <TransactionEditor
+          key={
+            editor.row
+              ? `edit-${editor.row.id}`
+              : editor.duplicateOf
+                ? `repeat-${editor.duplicateOf.id}`
+                : `${editor.kind}-${editor.obligationId || "new"}`
+          }
           initial={editor}
           onDuplicate={(row) => setEditor({ kind: row.kind, duplicateOf: row })}
           categories={categories}
@@ -1106,7 +1100,11 @@ function TransactionEditor({
   const [categoryId, setCategoryId] = useState(
     template?.categoryId || initial.presetCategoryId || "",
   );
-  const [sourceId, setSourceId] = useState(template?.paymentSourceId || "");
+  const [sourceId, setSourceId] = useState(
+    template?.paymentSourceId ||
+      (initial.kind === "expense" ? latestActiveSourceId(sources) : ""),
+  );
+  const [starred, setStarred] = useState(row?.starred ?? false);
   const [necessity, setNecessity] = useState(
     template?.necessity || "necessary",
   );
@@ -1140,6 +1138,7 @@ function TransactionEditor({
         paymentSourceName: sources.find((s) => s.id === sourceId)?.name || null,
         necessity: kind === "expense" ? necessity : null,
         note: text,
+        starred,
         createdAt: row?.createdAt || now,
         updatedAt: now,
       };
@@ -1254,6 +1253,17 @@ function TransactionEditor({
             </select>
           </label>
         )}
+        <button
+          type="button"
+          className={`favorite-toggle${starred ? " active" : ""}`}
+          aria-pressed={starred}
+          onClick={() => setStarred((value) => !value)}
+        >
+          <Star size={19} fill={starred ? "currentColor" : "none"} />
+          {starred
+            ? "ذخیره‌شده در تراکنش‌های پرتکرار"
+            : "افزودن به تراکنش‌های پرتکرار"}
+        </button>
         <label>
           تاریخ
           <div className="segment">
@@ -1672,6 +1682,17 @@ function SettingsScreen({
       </div>
       <Section title="به‌روزرسانی برنامه" />
       <div className="settings-card stack">
+        <span>
+          نسخه برنامه:{" "}
+          <bdi>
+            {packageVersion
+              .split(".")
+              .slice(0, 2)
+              .map(Number)
+              .map(persianNumber)
+              .join("٫")}
+          </bdi>
+        </span>
         <button onClick={onCheckUpdate} disabled={checkingUpdate}>
           <RefreshCw size={18} />
           {checkingUpdate ? "در حال بررسی…" : "بررسی نسخه تازه"}
