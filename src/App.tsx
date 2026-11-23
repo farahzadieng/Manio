@@ -62,6 +62,19 @@ const icons = {
 };
 function App() {
   const [tab, setTab] = useState<Tab>("home");
+  const previousTab = useRef<Tab>("home");
+  const tabOrder: Tab[] = [
+    "home",
+    "transactions",
+    "reports",
+    "obligations",
+    "settings",
+  ];
+  const direction =
+    tabOrder.indexOf(tab) >= tabOrder.indexOf(previousTab.current) ? 1 : -1;
+  useEffect(() => {
+    previousTab.current = tab;
+  }, [tab]);
   const [rows, setRows] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<PaymentSource[]>([]);
@@ -405,7 +418,10 @@ function App() {
           {tab === "settings" ? <ArrowRight /> : <SettingsIcon />}
         </button>
       </header>
-      <main className="content">
+      <main
+        key={tab}
+        className={`content page-enter ${direction < 0 ? "page-enter-reverse" : ""}`}
+      >
         {error && (
           <div className="error notice" role="alert">
             {error}
@@ -459,6 +475,8 @@ function App() {
             setCompareMonth={setCompareMonth}
             setFilters={setFilters}
             setTab={setTab}
+            reportMonth={month}
+            geminiApiKey={settings.geminiApiKey}
           />
         )}
         {tab === "obligations" && (

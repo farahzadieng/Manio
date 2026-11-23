@@ -1,4 +1,6 @@
+import { Select } from "../components/Select";
 import type { Dispatch, SetStateAction } from "react";
+import { FinancialAnalysisPanel } from "../components/FinancialAnalysis";
 import {
   type Transaction,
   type Category,
@@ -35,6 +37,8 @@ export function ReportsScreen({
   setCompareMonth,
   setFilters,
   setTab,
+  reportMonth,
+  geminiApiKey,
 }: {
   reportPeriod: ReportPeriod;
   setReportPeriod: (value: ReportPeriod) => void;
@@ -56,6 +60,8 @@ export function ReportsScreen({
   setCompareMonth: Dispatch<SetStateAction<JalaliMonth>>;
   setFilters: (value: Filters) => void;
   setTab: (value: Tab) => void;
+  reportMonth: JalaliMonth;
+  geminiApiKey: string;
 }) {
   return (
     <>
@@ -114,7 +120,7 @@ export function ReportsScreen({
         </div>
       )}
       <div className="filters report-filters">
-        <select
+        <Select
           aria-label="دسته گزارش"
           value={reportFilters.categoryId || ""}
           onChange={(e) =>
@@ -132,8 +138,8 @@ export function ReportsScreen({
                 {c.emoji} {c.name}
               </option>
             ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="ضرورت گزارش"
           value={reportFilters.necessity || ""}
           onChange={(e) =>
@@ -146,8 +152,8 @@ export function ReportsScreen({
           <option value="">همه ضرورت‌ها</option>
           <option value="necessary">ضروری</option>
           <option value="nonessential">غیرضروری</option>
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="منبع گزارش"
           value={reportFilters.paymentSourceId || ""}
           onChange={(e) =>
@@ -159,11 +165,11 @@ export function ReportsScreen({
         >
           <option value="">همه منابع</option>
           {sources.map((x) => (
-            <option key={x.id} value={x.id}>
+            <option key={x.id} value={x.id} data-color={x.color}>
               {x.name}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
       <section className="report-total">
         <span>هزینه ثبت‌شده</span>
@@ -307,6 +313,18 @@ export function ReportsScreen({
           )}
         </p>
       </div>
+      {reportPeriod === "month" && (
+        <FinancialAnalysisPanel
+          rows={filterTransactions(rows, {
+            from: selectedRange[0],
+            to: selectedRange[1],
+          })}
+          year={reportMonth.y}
+          month={reportMonth.m}
+          apiKey={geminiApiKey}
+          onOpenSettings={() => setTab("settings")}
+        />
+      )}
     </>
   );
 }

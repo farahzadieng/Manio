@@ -1,3 +1,4 @@
+import { Select } from "../components/Select";
 import { Plus, Search } from "lucide-react";
 import {
   type Transaction,
@@ -45,7 +46,7 @@ export function TransactionsScreen({
         />
       </label>
       <div className="filters">
-        <select
+        <Select
           aria-label="نوع تراکنش"
           value={filters.kind || ""}
           onChange={(e) =>
@@ -58,8 +59,8 @@ export function TransactionsScreen({
           <option value="">همه نوع‌ها</option>
           <option value="expense">هزینه</option>
           <option value="income">درآمد</option>
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="دسته"
           value={filters.categoryId || ""}
           onChange={(e) =>
@@ -75,8 +76,8 @@ export function TransactionsScreen({
               {c.emoji} {c.name}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="منبع پرداخت"
           value={filters.paymentSourceId || ""}
           onChange={(e) =>
@@ -88,12 +89,12 @@ export function TransactionsScreen({
         >
           <option value="">همه منابع</option>
           {sources.map((s) => (
-            <option key={s.id} value={s.id}>
+            <option key={s.id} value={s.id} data-color={s.color}>
               {s.name}
             </option>
           ))}
-        </select>
-        <select
+        </Select>
+        <Select
           aria-label="ضرورت"
           value={filters.necessity || ""}
           onChange={(e) =>
@@ -106,7 +107,7 @@ export function TransactionsScreen({
           <option value="">همه ضرورت‌ها</option>
           <option value="necessary">ضروری</option>
           <option value="nonessential">غیرضروری</option>
-        </select>
+        </Select>
         {filters.from ? (
           <DatePicker
             value={filters.from}

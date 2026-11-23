@@ -18,6 +18,7 @@ const backupSchema = z.object({
     recurrenceRules: z.array(schemas.recurrenceRules),
     settings: z.array(schemas.settings),
     metadata: z.array(schemas.metadata),
+    analyses: z.array(schemas.analyses).default([]),
   }),
 });
 export type Backup = z.infer<typeof backupSchema>;
@@ -25,6 +26,7 @@ export async function exportBackup(): Promise<Backup> {
   const data = {} as Backup["data"];
   for (const name of stores)
     (data as Record<TableName, Tables[TableName][]>)[name] = await all(name);
+  data.settings = data.settings.map((s) => ({ ...s, geminiApiKey: "" }));
   return {
     format: "manio-backup",
     version: 1,
@@ -34,6 +36,7 @@ export async function exportBackup(): Promise<Backup> {
 }
 export function validateBackup(raw: unknown): Backup {
   const b = backupSchema.parse(raw);
+  b.data.settings = b.data.settings.map((s) => ({ ...s, geminiApiKey: "" }));
   if (b.data.metadata[0]?.schemaVersion > DB_VERSION)
     throw new Error("نسخه داده‌ها جدیدتر از برنامه است");
   if (b.data.settings.length !== 1 || b.data.metadata.length !== 1)

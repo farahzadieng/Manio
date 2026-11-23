@@ -27,7 +27,10 @@ export const sourceSchema = z.object({
   ...base,
   name: z.string().min(1),
   kind: z.enum(["card", "cash", "other"]),
-  color: z.string(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#285646"),
   active: z.boolean(),
 });
 export const categorySchema = z.object({
@@ -87,7 +90,15 @@ export const settingsSchema = z.object({
     .nullable()
     .default(null),
   currency: z.literal("toman"),
+  geminiApiKey: z.string().default(""),
 });
+export const analysisSchema = z.object({
+  ...base,
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  text: z.string().min(1),
+  transactionCount: z.number().int().nonnegative(),
+});
+export type FinancialAnalysis = z.infer<typeof analysisSchema>;
 export const metadataSchema = z.object({
   id: z.literal("main"),
   schemaVersion: z.number().int(),
@@ -109,6 +120,7 @@ export type Tables = {
   recurrenceRules: RecurrenceRule;
   settings: Settings;
   metadata: Metadata;
+  analyses: FinancialAnalysis;
 };
 export type TableName = keyof Tables;
 export const schemas = {
@@ -119,6 +131,7 @@ export const schemas = {
   recurrenceRules: recurrenceSchema,
   settings: settingsSchema,
   metadata: metadataSchema,
+  analyses: analysisSchema,
 };
 export function localISO(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

@@ -1,3 +1,4 @@
+import { Select } from "./Select";
 import { useState } from "react";
 import { Copy, Star, Trash2, X } from "lucide-react";
 import { get, put, remove, atomicReplace } from "../lib/db";
@@ -166,7 +167,7 @@ export function TransactionEditor({
         </label>
         <label>
           دسته
-          <select
+          <Select
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
@@ -182,11 +183,11 @@ export function TransactionEditor({
                 {c.emoji} {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <label>
           {kind === "expense" ? "منبع پرداخت" : "دریافت در (اختیاری)"}
-          <select
+          <Select
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
           >
@@ -194,22 +195,22 @@ export function TransactionEditor({
             {sources
               .filter((s) => s.active || s.id === sourceId)
               .map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={s.id} data-color={s.color}>
                   {s.name}
                 </option>
               ))}
-          </select>
+          </Select>
         </label>
         {kind === "expense" && (
           <label>
             ضرورت
-            <select
+            <Select
               value={necessity}
               onChange={(e) => setNecessity(e.target.value as typeof necessity)}
             >
               <option value="necessary">ضروری</option>
               <option value="nonessential">غیرضروری</option>
-            </select>
+            </Select>
           </label>
         )}
         <button

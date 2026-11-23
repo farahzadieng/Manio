@@ -6,7 +6,7 @@ import {
   type Settings,
 } from "./domain";
 const NAME = "manio-local";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 export const stores: TableName[] = [
   "paymentSources",
   "categories",
@@ -15,6 +15,7 @@ export const stores: TableName[] = [
   "recurrenceRules",
   "settings",
   "metadata",
+  "analyses",
 ];
 let connection: Promise<IDBDatabase> | null = null;
 export function db(): Promise<IDBDatabase> {
@@ -48,17 +49,27 @@ export function db(): Promise<IDBDatabase> {
             current.continue();
           };
         }
-        if (event.oldVersion < 4) {
+        if (event.oldVersion < 5) {
           const settings = tx.objectStore("settings");
           const cursor = settings.openCursor();
           cursor.onsuccess = () => {
             const current = cursor.result;
             if (!current) return;
-            if (!("lastBackupReminderMonth" in current.value))
-              current.update({
-                ...current.value,
-                lastBackupReminderMonth: null,
-              });
+            current.update({
+              ...current.value,
+              lastBackupReminderMonth:
+                current.value.lastBackupReminderMonth ?? null,
+              geminiApiKey: current.value.geminiApiKey ?? "",
+            });
+            current.continue();
+          };
+          const sources = tx.objectStore("paymentSources");
+          const sourceCursor = sources.openCursor();
+          sourceCursor.onsuccess = () => {
+            const current = sourceCursor.result;
+            if (!current) return;
+            if (!/^#[0-9a-fA-F]{6}$/.test(current.value.color || ""))
+              current.update({ ...current.value, color: "#285646" });
             current.continue();
           };
         }
@@ -144,6 +155,7 @@ export async function initialize() {
       lastBackupAt: null,
       lastBackupReminderMonth: null,
       currency: "toman",
+      geminiApiKey: "",
     };
     await put("settings", settings);
   }

@@ -17,11 +17,19 @@ test("empty start, create/edit/repeat/delete expense and search", async ({
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   await page.getByPlaceholder("جست‌وجو در یادداشت، دسته یا منبع").fill("vpn");
   await expect(page.getByText("۱ نتیجه")).toBeVisible();
-  await page.getByRole("button", { name: /خوراک/ }).click();
+  await page
+    .locator(".transaction-row")
+    .filter({ hasText: "خوراک" })
+    .first()
+    .click();
   await page.getByLabel("مبلغ (تومان)").fill("15000");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByPlaceholder("جست‌وجو در یادداشت، دسته یا منبع").fill("");
-  await page.getByRole("button", { name: /خوراک/ }).click();
+  await page
+    .locator(".transaction-row")
+    .filter({ hasText: "خوراک" })
+    .first()
+    .click();
   await page.getByRole("button", { name: "تکرار برای امروز" }).click();
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await expect(page.getByText("۲ نتیجه")).toBeVisible();
@@ -180,7 +188,7 @@ test("version, last used payment source and starred repeat shortcut", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "تنظیمات" }).click();
-  await expect(page.getByText("نسخه برنامه:")).toContainText("۱٫۵");
+  await expect(page.getByText("نسخه برنامه:")).toContainText("۲٫۰");
   await page.getByLabel("نام منبع تازه").fill("کارت تازه");
   await page
     .locator(".inline-form")
@@ -270,4 +278,45 @@ test("monthly backup toast appears once and can be dismissed", async ({
   await expect(toast).not.toBeVisible();
   await page.reload();
   await expect(toast).not.toBeVisible();
+});
+
+test("monthly behavior analysis persists and existing source gets a palette color", async ({
+  page,
+}) => {
+  await page.route("**/api/analyze", async (route) => {
+    const body = route.request().postDataJSON();
+    expect(body.prompt).toContain("| تاریخ | عنوان | هزینه (تومان) |");
+    expect(route.request().headers()["x-gemini-key"]).toBe("test-key");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        text: "الگوی احتمالی: خرید پس از خستگی.\nآزمایش کوچک هفتهٔ بعد: پیش از خرید مکث کنید.",
+      }),
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.getByRole("button", { name: "تنظیمات" }).click();
+  await page.getByLabel("کلید Gemini API").fill("test-key");
+  await page.getByRole("button", { name: "ذخیره کلید" }).click();
+  const source = page.locator(".manage-row").filter({ hasText: "کارت روزمره" });
+  await source.getByRole("button", { name: "ویرایش" }).click();
+  await page.getByRole("button", { name: "رنگ ۴" }).click();
+  await page.getByRole("button", { name: "ذخیره تغییرات" }).click();
+  await expect(source.locator(".source-dot")).toHaveCSS(
+    "background-color",
+    "rgb(37, 99, 235)",
+  );
+  await page.getByRole("button", { name: "گزارش‌ها", exact: true }).click();
+  await page.getByRole("button", { name: "تحلیل با Gemini" }).click();
+  await expect(
+    page.getByText("الگوی احتمالی: خرید پس از خستگی.", { exact: false }),
+  ).toBeVisible();
+  await page.reload();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.getByRole("button", { name: "دیدن گزارش‌ها ←" }).click();
+  await expect(
+    page.getByText("الگوی احتمالی: خرید پس از خستگی.", { exact: false }),
+  ).toBeVisible();
 });

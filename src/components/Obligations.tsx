@@ -1,3 +1,4 @@
+import { Select } from "./Select";
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { put, remove, atomicReplace } from "../lib/db";
@@ -238,7 +239,7 @@ export function ObligationEditor({
         </div>
         <label>
           نوع
-          <select
+          <Select
             value={type}
             onChange={(e) => setType(e.target.value as Obligation["type"])}
           >
@@ -246,7 +247,7 @@ export function ObligationEditor({
             <option value="receivable">طلب</option>
             <option value="plannedPayment">پرداخت برنامه‌ریزی‌شده</option>
             <option value="reminder">یادآوری مالی</option>
-          </select>
+          </Select>
         </label>
         <label>
           عنوان
@@ -267,7 +268,7 @@ export function ObligationEditor({
         {!initial && (
           <label>
             تکرار
-            <select
+            <Select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as typeof frequency)}
             >
@@ -276,7 +277,7 @@ export function ObligationEditor({
               <option value="weekly">هفتگی</option>
               <option value="monthly">ماهانه شمسی</option>
               <option value="yearly">سالانه شمسی</option>
-            </select>
+            </Select>
           </label>
         )}
         <label>

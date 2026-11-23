@@ -1,6 +1,6 @@
 # Implementation status
 
-Phase: version 1.5 implementation complete; local release verification passed.
+Phase: version 2.0 implementation complete; local release verification passed.
 
 Decisions: Empty target directory became a static React/Vite app. IndexedDB is the sole authoritative data store. Amounts are positive safe integer tomans; aggregate overflow throws. Local civil Gregorian ISO dates are stored and converted to Jalali in the UI. The referenced MIT `shadcn-persian` DatePicker imports private `@workspace/ui` components and Base UI, so a self-contained Jalali adapter is used. Apple Calendar integration is a user-initiated copy fallback because a browser PWA cannot use EventKit or reliably open a prefilled native editor without an `.ics` workflow.
 
@@ -27,3 +27,7 @@ Version 1.5 update (2026-11-23): Split the formerly 1,996-line `App.tsx` into an
 Local gate for v1.5: lint, typecheck, 23 unit/integration tests, production build with PWA precache, 8 mobile browser E2E tests, 4 production PWA tests, and `git diff --check` passed. Actual installed iPhone verification remains manual.
 
 Release status (2026-11-23): source commit `6eeb921` was pushed to `origin/main`; GitHub CI completed successfully. The public hostname served the same versioned JavaScript asset (`index-CbEd-yk_.js`) as the local production build. This verifies the new static bundle is served, but not an actual installed-iPhone update.
+
+Version 2.0 update (2026-11-24): Tab transitions, custom dropdowns, source color palette and editing, optional financial behavior prompt/Gemini analysis via Cloudflare Pages Function, and locally stored monthly analysis history. IndexedDB v5 migrates settings and adds analyses. Gemini key is excluded from JSON backups. Package version is 2.0.0.
+
+Local v2 gate: lint, typecheck, 26 unit/integration tests, production build, 9 mobile browser E2E tests, 4 offline PWA tests, and `git diff --check` passed. Real Gemini calls and Cloudflare deployment require the user's key and production Pages environment.

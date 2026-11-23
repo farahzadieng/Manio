@@ -1,3 +1,4 @@
+import { Select } from "./Select";
 import { useState } from "react";
 import { Download, Upload, Sun, Moon, Monitor, RefreshCw } from "lucide-react";
 import { version as packageVersion } from "../../package.json";
@@ -13,6 +14,24 @@ import {
 import { transactionCSV, download } from "../lib/backup";
 import { seedDemo } from "../lib/demo";
 import { Section } from "./JournalPieces";
+const sourceColors = [
+  "#285646",
+  "#0F766E",
+  "#0891B2",
+  "#2563EB",
+  "#4F46E5",
+  "#7C3AED",
+  "#A21CAF",
+  "#BE185D",
+  "#E11D48",
+  "#DC2626",
+  "#EA580C",
+  "#D97706",
+  "#CA8A04",
+  "#65A30D",
+  "#64748B",
+  "#334155",
+];
 export function SettingsScreen({
   settings,
   categories,
@@ -41,9 +60,15 @@ export function SettingsScreen({
   updateMessage: string;
 }) {
   const [name, setName] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  );
   const [emoji, setEmoji] = useState("🧾");
   const [kind, setKind] = useState<Category["transactionKind"]>("expense");
   const [sourceName, setSourceName] = useState("");
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState(settings.geminiApiKey);
+  const [keySaved, setKeySaved] = useState(false);
   const [sourceColor, setSourceColor] = useState("#285646");
   const [sourceKind, setSourceKind] = useState<PaymentSource["kind"]>("card");
   const [defaultNecessity, setDefaultNecessity] =
@@ -91,6 +116,37 @@ export function SettingsScreen({
         </button>
         {updateMessage && <small role="status">{updateMessage}</small>}
       </div>
+      <Section title="هوش مصنوعی" />
+      <div className="settings-card stack">
+        <label htmlFor="gemini-api-key">کلید Gemini API</label>
+        <input
+          id="gemini-api-key"
+          className="field"
+          type="password"
+          autoComplete="off"
+          value={apiKey}
+          onChange={(e) => {
+            setApiKey(e.target.value);
+            setKeySaved(false);
+          }}
+          placeholder="کلید خود را وارد کنید"
+        />
+        <button
+          onClick={async () => {
+            await save({ ...settings, geminiApiKey: apiKey.trim() });
+            setKeySaved(true);
+          }}
+        >
+          ذخیره کلید
+        </button>
+        {keySaved && (
+          <small role="status">کلید روی همین دستگاه ذخیره شد.</small>
+        )}
+        <small>
+          کلید در پشتیبان JSON قرار نمی‌گیرد. هنگام تحلیل، کلید و داده‌های هزینه
+          به Cloudflare و سپس Gemini ارسال می‌شوند.
+        </small>
+      </div>
       <Section title="دسته‌ها" />
       <div className="settings-card">
         {categories.map((c) => (
@@ -100,38 +156,12 @@ export function SettingsScreen({
             </span>
             <span className="manage-actions">
               <button
-                onClick={async () => {
-                  const name = prompt("نام دسته", c.name);
-                  if (!name?.trim()) return;
-                  const emoji = prompt("ایموجی", c.emoji) || c.emoji;
-                  const necessity =
-                    c.transactionKind === "expense"
-                      ? prompt(
-                          "ضرورت پیش‌فرض: ضروری یا غیرضروری",
-                          c.defaultNecessity === "nonessential"
-                            ? "غیرضروری"
-                            : "ضروری",
-                        )
-                      : null;
-                  if (
-                    necessity !== null &&
-                    necessity !== "ضروری" &&
-                    necessity !== "غیرضروری"
-                  )
-                    return;
-                  await put("categories", {
-                    ...c,
-                    name: name.trim(),
-                    emoji,
-                    defaultNecessity:
-                      necessity === null
-                        ? null
-                        : necessity === "ضروری"
-                          ? "necessary"
-                          : "nonessential",
-                    updatedAt: new Date().toISOString(),
-                  });
-                  await refresh();
+                onClick={() => {
+                  setEditingCategoryId(c.id);
+                  setName(c.name);
+                  setEmoji(c.emoji);
+                  setKind(c.transactionKind);
+                  setDefaultNecessity(c.defaultNecessity || "necessary");
                 }}
               >
                 ویرایش
@@ -153,7 +183,7 @@ export function SettingsScreen({
         ))}
         <div className="inline-form">
           <input
-            aria-label="نام دسته تازه"
+            aria-label={editingCategoryId ? "ویرایش نام دسته" : "نام دسته تازه"}
             placeholder="نام دسته"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -164,18 +194,24 @@ export function SettingsScreen({
             value={emoji}
             onChange={(e) => setEmoji(e.target.value)}
           />
-          <select
-            aria-label="نوع دسته"
-            value={kind}
-            onChange={(e) =>
-              setKind(e.target.value as Category["transactionKind"])
-            }
-          >
-            <option value="expense">هزینه</option>
-            <option value="income">درآمد</option>
-          </select>
+          {editingCategoryId ? (
+            <span className="edit-kind-note">
+              نوع دسته: {kind === "expense" ? "هزینه" : "درآمد"}
+            </span>
+          ) : (
+            <Select
+              aria-label="نوع دسته"
+              value={kind}
+              onChange={(e) =>
+                setKind(e.target.value as Category["transactionKind"])
+              }
+            >
+              <option value="expense">هزینه</option>
+              <option value="income">درآمد</option>
+            </Select>
+          )}
           {kind === "expense" && (
-            <select
+            <Select
               aria-label="ضرورت پیش‌فرض"
               value={defaultNecessity || "necessary"}
               onChange={(e) =>
@@ -186,28 +222,50 @@ export function SettingsScreen({
             >
               <option value="necessary">ضروری</option>
               <option value="nonessential">غیرضروری</option>
-            </select>
+            </Select>
           )}
           <button
             onClick={async () => {
               if (!name.trim()) return;
               const now = new Date().toISOString();
+              const existing = categories.find(
+                (category) => category.id === editingCategoryId,
+              );
               await put("categories", {
-                id: crypto.randomUUID(),
+                id: existing?.id || crypto.randomUUID(),
                 name: name.trim(),
                 emoji,
                 transactionKind: kind,
                 defaultNecessity: kind === "expense" ? defaultNecessity : null,
-                active: true,
-                createdAt: now,
+                active: existing?.active ?? true,
+                createdAt: existing?.createdAt || now,
                 updatedAt: now,
               });
               setName("");
+              setEmoji("🧾");
+              setKind("expense");
+              setDefaultNecessity("necessary");
+              setEditingCategoryId(null);
               await refresh();
             }}
           >
-            افزودن
+            {editingCategoryId ? "ذخیره تغییرات" : "افزودن"}
           </button>
+          {editingCategoryId && (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setEditingCategoryId(null);
+                setName("");
+                setEmoji("🧾");
+                setKind("expense");
+                setDefaultNecessity("necessary");
+              }}
+            >
+              انصراف
+            </button>
+          )}
         </div>
       </div>
       <Section title="منابع پرداخت" />
@@ -220,38 +278,11 @@ export function SettingsScreen({
             </span>
             <span className="manage-actions">
               <button
-                onClick={async () => {
-                  const name = prompt("نام منبع", s.name);
-                  if (!name?.trim()) return;
-                  const color =
-                    prompt("رنگ منبع (کد #RRGGBB)", s.color) || s.color;
-                  const kind =
-                    prompt(
-                      "نوع منبع: کارت، نقد یا دیگر",
-                      s.kind === "card"
-                        ? "کارت"
-                        : s.kind === "cash"
-                          ? "نقد"
-                          : "دیگر",
-                    ) || "دیگر";
-                  if (
-                    !/^#[0-9a-fA-F]{6}$/.test(color) ||
-                    !["کارت", "نقد", "دیگر"].includes(kind)
-                  )
-                    return;
-                  await put("paymentSources", {
-                    ...s,
-                    name: name.trim(),
-                    color,
-                    kind:
-                      kind === "کارت"
-                        ? "card"
-                        : kind === "نقد"
-                          ? "cash"
-                          : "other",
-                    updatedAt: new Date().toISOString(),
-                  });
-                  await refresh();
+                onClick={() => {
+                  setEditingSourceId(s.id);
+                  setSourceName(s.name);
+                  setSourceKind(s.kind);
+                  setSourceColor(s.color);
                 }}
               >
                 ویرایش
@@ -273,12 +304,12 @@ export function SettingsScreen({
         ))}
         <div className="inline-form">
           <input
-            aria-label="نام منبع تازه"
+            aria-label={editingSourceId ? "ویرایش نام منبع" : "نام منبع تازه"}
             placeholder="نام منبع"
             value={sourceName}
             onChange={(e) => setSourceName(e.target.value)}
           />
-          <select
+          <Select
             aria-label="نوع منبع"
             value={sourceKind}
             onChange={(e) =>
@@ -288,32 +319,63 @@ export function SettingsScreen({
             <option value="card">کارت</option>
             <option value="cash">نقد</option>
             <option value="other">دیگر</option>
-          </select>
-          <input
-            aria-label="رنگ منبع"
-            type="color"
-            value={sourceColor}
-            onChange={(e) => setSourceColor(e.target.value)}
-          />
+          </Select>
+          <div className="source-palette" role="group" aria-label="رنگ منبع">
+            {sourceColors.map((color, index) => (
+              <button
+                type="button"
+                key={color}
+                className={
+                  sourceColor.toLowerCase() === color.toLowerCase()
+                    ? "selected"
+                    : ""
+                }
+                style={{ background: color }}
+                aria-label={`رنگ ${persianNumber(index + 1)}`}
+                aria-pressed={sourceColor.toLowerCase() === color.toLowerCase()}
+                onClick={() => setSourceColor(color)}
+              />
+            ))}
+          </div>
           <button
             onClick={async () => {
               if (!sourceName.trim()) return;
               const now = new Date().toISOString();
+              const existing = sources.find(
+                (source) => source.id === editingSourceId,
+              );
               await put("paymentSources", {
-                id: crypto.randomUUID(),
+                id: existing?.id || crypto.randomUUID(),
                 name: sourceName.trim(),
                 kind: sourceKind,
                 color: sourceColor,
-                active: true,
-                createdAt: now,
+                active: existing?.active ?? true,
+                createdAt: existing?.createdAt || now,
                 updatedAt: now,
               });
               setSourceName("");
+              setSourceColor("#285646");
+              setSourceKind("card");
+              setEditingSourceId(null);
               await refresh();
             }}
           >
-            افزودن
+            {editingSourceId ? "ذخیره تغییرات" : "افزودن"}
           </button>
+          {editingSourceId && (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => {
+                setEditingSourceId(null);
+                setSourceName("");
+                setSourceColor("#285646");
+                setSourceKind("card");
+              }}
+            >
+              انصراف
+            </button>
+          )}
         </div>
       </div>
       <Section title="داده‌های من" />
