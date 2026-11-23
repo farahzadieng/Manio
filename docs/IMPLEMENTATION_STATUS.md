@@ -6,9 +6,9 @@ Decisions: Empty target directory became a static React/Vite app. IndexedDB is t
 
 Completed: app shell, themes, touch-safe navigation, PWA assets and update prompt, stores/indexes/migration, empty and demo onboarding, transaction CRUD/search/filter/repeat, reports with periods/filters/trend/comparison, obligations/recurrence/completion, settings management, JSON/CSV export and JSON import/reset, CI, tests and docs.
 
-External boundaries: no actual iPhone or installed iOS PWA check. The corrected public hostname `manio.luminiastudio.ir` returned HTTP 200 on 2026-11-19; deployment of the latest local commit remains unverified.
+External boundaries: no actual iPhone or installed iOS PWA check. The corrected public hostname is `manio.luminiastudio.ir`.
 
-Next: commit and push to `origin/main`, verify the Cloudflare deployment, and perform the manual installed-iPhone checklist in `QA_REPORT.md`.
+Next: perform the manual installed-iPhone checklist in `QA_REPORT.md` after the phone receives the PWA update.
 
 Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pages has native SPA fallback without a top-level 404 page. Replaced Vazirmatn with the user-provided local Arad variable WOFF2 font; no runtime font request to a third party.
 
@@ -25,3 +25,5 @@ Version 1.0 update (2026-11-19): Settings displays version ۱٫۰ from package S
 Version 1.5 update (2026-11-23): Split the formerly 1,996-line `App.tsx` into an approximately 550-line orchestration component, three screen modules, and editor/settings/shared UI modules without changing the existing screen flow. A monthly Gregorian backup toast is claimed atomically in IndexedDB and appears on open/resume if no backup has been exported or reminder shown that month. New expenses use the active payment source from the most recently created source-bearing transaction, with the newest active source as an empty-history fallback. Schema v4 migrates reminder state; old backups remain importable. Package version is 1.5.0 and Settings displays ۱٫۵.
 
 Local gate for v1.5: lint, typecheck, 23 unit/integration tests, production build with PWA precache, 8 mobile browser E2E tests, 4 production PWA tests, and `git diff --check` passed. Actual installed iPhone verification remains manual.
+
+Release status (2026-11-23): source commit `6eeb921` was pushed to `origin/main`; GitHub CI completed successfully. The public hostname served the same versioned JavaScript asset (`index-CbEd-yk_.js`) as the local production build. This verifies the new static bundle is served, but not an actual installed-iPhone update.
