@@ -13,6 +13,7 @@ import {
   monthlyTrend,
   type Transaction,
   latestActiveSourceId,
+  lastUsedSourceId,
 } from "./domain";
 const base: Transaction = {
   id: "10000000-0000-4000-8000-000000000001",
@@ -103,5 +104,44 @@ describe("local domain", () => {
         source("archived", "2026-03-01T00:00:00.000Z", false),
       ]),
     ).toBe("new");
+  });
+  it("prefers the source on the last recorded transaction", () => {
+    const old = {
+      id: "10000000-0000-4000-8000-000000000101",
+      name: "Old card",
+      kind: "card" as const,
+      color: "#285646",
+      active: true,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const newSource = {
+      ...old,
+      id: "10000000-0000-4000-8000-000000000102",
+      createdAt: "2026-11-20T00:00:00.000Z",
+    };
+    const recorded = {
+      ...base,
+      paymentSourceId: old.id,
+      createdAt: "2026-11-19T00:00:00.000Z",
+    };
+    expect(lastUsedSourceId([recorded], [old, newSource])).toBe(old.id);
+    expect(
+      lastUsedSourceId(
+        [
+          recorded,
+          {
+            ...recorded,
+            id: crypto.randomUUID(),
+            paymentSourceId: newSource.id,
+            createdAt: "2026-11-21T00:00:00.000Z",
+          },
+        ],
+        [old, newSource],
+      ),
+    ).toBe(newSource.id);
+    expect(
+      lastUsedSourceId([recorded], [{ ...old, active: false }, newSource]),
+    ).toBe(newSource.id);
   });
 });

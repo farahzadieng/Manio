@@ -81,6 +81,11 @@ export const settingsSchema = z.object({
   onboarded: z.boolean(),
   demo: z.boolean(),
   lastBackupAt: timestamp.nullable(),
+  lastBackupReminderMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/)
+    .nullable()
+    .default(null),
   currency: z.literal("toman"),
 });
 export const metadataSchema = z.object({
@@ -146,6 +151,26 @@ export function latestActiveSourceId(sources: PaymentSource[]) {
         (a, b) =>
           b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id),
       )[0]?.id || ""
+  );
+}
+export function lastUsedSourceId(
+  transactions: Transaction[],
+  sources: PaymentSource[],
+) {
+  const activeIds = new Set(
+    sources.filter((source) => source.active).map((source) => source.id),
+  );
+  return (
+    [...transactions]
+      .filter(
+        (transaction) =>
+          transaction.paymentSourceId &&
+          activeIds.has(transaction.paymentSourceId),
+      )
+      .sort(
+        (a, b) =>
+          b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id),
+      )[0]?.paymentSourceId || latestActiveSourceId(sources)
   );
 }
 export function parseAmount(input: string) {

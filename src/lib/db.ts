@@ -6,7 +6,7 @@ import {
   type Settings,
 } from "./domain";
 const NAME = "manio-local";
-const VERSION = 3;
+export const DB_VERSION = 4;
 export const stores: TableName[] = [
   "paymentSources",
   "categories",
@@ -20,7 +20,7 @@ let connection: Promise<IDBDatabase> | null = null;
 export function db(): Promise<IDBDatabase> {
   if (!connection)
     connection = new Promise((resolve, reject) => {
-      const request = indexedDB.open(NAME, VERSION);
+      const request = indexedDB.open(NAME, DB_VERSION);
       request.onupgradeneeded = (event) => {
         const d = request.result;
         for (const name of stores)
@@ -45,6 +45,20 @@ export function db(): Promise<IDBDatabase> {
             if (!current) return;
             if (typeof current.value.starred !== "boolean")
               current.update({ ...current.value, starred: false });
+            current.continue();
+          };
+        }
+        if (event.oldVersion < 4) {
+          const settings = tx.objectStore("settings");
+          const cursor = settings.openCursor();
+          cursor.onsuccess = () => {
+            const current = cursor.result;
+            if (!current) return;
+            if (!("lastBackupReminderMonth" in current.value))
+              current.update({
+                ...current.value,
+                lastBackupReminderMonth: null,
+              });
             current.continue();
           };
         }
@@ -128,6 +142,7 @@ export async function initialize() {
       onboarded: false,
       demo: false,
       lastBackupAt: null,
+      lastBackupReminderMonth: null,
       currency: "toman",
     };
     await put("settings", settings);
@@ -136,15 +151,15 @@ export async function initialize() {
   if (!m) {
     const metadata: Metadata = {
       id: "main",
-      schemaVersion: VERSION,
+      schemaVersion: DB_VERSION,
       seedProvenance: null,
       migratedAt: new Date().toISOString(),
     };
     await put("metadata", metadata);
-  } else if (m.schemaVersion < VERSION)
+  } else if (m.schemaVersion < DB_VERSION)
     await put("metadata", {
       ...m,
-      schemaVersion: VERSION,
+      schemaVersion: DB_VERSION,
       migratedAt: new Date().toISOString(),
     });
 }

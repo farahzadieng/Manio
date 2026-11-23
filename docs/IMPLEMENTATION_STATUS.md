@@ -1,6 +1,6 @@
 # Implementation status
 
-Phase: version 1.0 implementation complete; local verification passed.
+Phase: version 1.5 implementation complete; local release verification passed.
 
 Decisions: Empty target directory became a static React/Vite app. IndexedDB is the sole authoritative data store. Amounts are positive safe integer tomans; aggregate overflow throws. Local civil Gregorian ISO dates are stored and converted to Jalali in the UI. The referenced MIT `shadcn-persian` DatePicker imports private `@workspace/ui` components and Base UI, so a self-contained Jalali adapter is used. Apple Calendar integration is a user-initiated copy fallback because a browser PWA cannot use EventKit or reliably open a prefilled native editor without an `.ics` workflow.
 
@@ -8,7 +8,7 @@ Completed: app shell, themes, touch-safe navigation, PWA assets and update promp
 
 External boundaries: no actual iPhone or installed iOS PWA check. The corrected public hostname `manio.luminiastudio.ir` returned HTTP 200 on 2026-11-19; deployment of the latest local commit remains unverified.
 
-Next: publish the local commit when desired, verify the Cloudflare deployment, and perform the manual installed-iPhone checklist in `QA_REPORT.md`.
+Next: commit and push to `origin/main`, verify the Cloudflare deployment, and perform the manual installed-iPhone checklist in `QA_REPORT.md`.
 
 Deployment fix (2026-11-15): removed the looping catch-all `_redirects` rule. Pages has native SPA fallback without a top-level 404 page. Replaced Vazirmatn with the user-provided local Arad variable WOFF2 font; no runtime font request to a third party.
 
@@ -21,3 +21,7 @@ Dashboard and update verification (2026-11-16): confirmed the Home card already 
 Form polish (2026-11-16): editable controls use at least 16 px text to avoid Safari's small-field focus zoom without disabling user pinch zoom. Transaction and obligation amount fields group Persian digits while typing and retain a safe integer for storage. Settings now offers a user-initiated service-worker update check; available updates still require the update banner confirmation.
 
 Version 1.0 update (2026-11-19): Settings displays version ۱٫۰ from package SemVer 1.0.0. Transaction editor supports explicit starring; Home repeats starred transactions with amount, category, source, necessity and note, creating a new ID and today's date. New expenses default to the most recently created active payment source. IndexedDB schema v3 migrates old transactions to unstarred; older backups import with the same default. README is concise English with direct-use and Cloudflare fork guidance. Root Architecture.md maps the code and change path. Release checks passed locally: lint, typecheck, 19 unit tests, 7 mobile browser E2E tests, build and 4 production PWA tests. The initially supplied `.com` hostname was incorrect; the corrected `.ir` hostname returned HTTP 200. The latest commit's deployment and installed-iPhone behavior remain unverified.
+
+Version 1.5 update (2026-11-23): Split the formerly 1,996-line `App.tsx` into an approximately 550-line orchestration component, three screen modules, and editor/settings/shared UI modules without changing the existing screen flow. A monthly Gregorian backup toast is claimed atomically in IndexedDB and appears on open/resume if no backup has been exported or reminder shown that month. New expenses use the active payment source from the most recently created source-bearing transaction, with the newest active source as an empty-history fallback. Schema v4 migrates reminder state; old backups remain importable. Package version is 1.5.0 and Settings displays ۱٫۵.
+
+Local gate for v1.5: lint, typecheck, 23 unit/integration tests, production build with PWA precache, 8 mobile browser E2E tests, 4 production PWA tests, and `git diff --check` passed. Actual installed iPhone verification remains manual.

@@ -40,7 +40,7 @@ describe("storage and backup", () => {
       open.onerror = () => reject(open.error);
     });
     const upgraded = await db();
-    expect(upgraded.version).toBe(3);
+    expect(upgraded.version).toBe(4);
     expect((await get("settings", "main"))?.theme).toBe("dark");
     expect(upgraded.objectStoreNames.contains("transactions")).toBe(true);
   });
@@ -86,6 +86,40 @@ describe("storage and backup", () => {
       starred: false,
     });
   });
+  it("adds reminder state to a version-three database without changing settings", async () => {
+    await closeForTests();
+    await new Promise<void>((resolve, reject) => {
+      const drop = indexedDB.deleteDatabase("manio-local");
+      drop.onsuccess = () => resolve();
+      drop.onerror = () => reject(drop.error);
+    });
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open("manio-local", 3);
+      open.onupgradeneeded = () =>
+        open.result.createObjectStore("settings", { keyPath: "id" });
+      open.onsuccess = () => {
+        const tx = open.result.transaction("settings", "readwrite");
+        tx.objectStore("settings").put({
+          id: "main",
+          theme: "dark",
+          onboarded: true,
+          demo: false,
+          lastBackupAt: null,
+          currency: "toman",
+        });
+        tx.oncomplete = () => {
+          open.result.close();
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      };
+      open.onerror = () => reject(open.error);
+    });
+    expect(await get("settings", "main")).toMatchObject({
+      theme: "dark",
+      lastBackupReminderMonth: null,
+    });
+  });
   it("persists CRUD and resets", async () => {
     const s = (await get("settings", "main"))!;
     await put("settings", { ...s, theme: "dark" });
@@ -124,12 +158,14 @@ describe("storage and backup", () => {
     await seedDemo();
     const old = structuredClone(await exportBackup());
     old.data.metadata[0].schemaVersion = 2;
+    delete (old.data.settings[0] as Partial<(typeof old.data.settings)[0]>)
+      .lastBackupReminderMonth;
     for (const row of old.data.transactions)
       delete (row as Partial<typeof row>).starred;
     await importBackup(old, "replace");
     expect(
       (await all("transactions")).every((row) => row.starred === false),
     ).toBe(true);
-    expect((await get("metadata", "main"))?.schemaVersion).toBe(3);
+    expect((await get("metadata", "main"))?.schemaVersion).toBe(4);
   });
 });

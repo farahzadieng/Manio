@@ -154,7 +154,7 @@ test("editable fields have iPhone-safe text size and obligations group amounts",
         .map((element) => element.outerHTML),
     );
   expect(undersizedEditorFields).toEqual([]);
-  await page.getByRole("button", { name: "بستن" }).click();
+  await page.getByRole("button", { name: "بستن", exact: true }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   const undersizedSearchFields = await page
     .locator(".search input, .filters select")
@@ -174,13 +174,13 @@ test("editable fields have iPhone-safe text size and obligations group amounts",
   await expect(obligationAmount).toHaveValue("۲٬۵۰۰٬۰۰۰");
 });
 
-test("version, newest payment source and starred repeat shortcut", async ({
+test("version, last used payment source and starred repeat shortcut", async ({
   page,
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "تنظیمات" }).click();
-  await expect(page.getByText("نسخه برنامه:")).toContainText("۱٫۰");
+  await expect(page.getByText("نسخه برنامه:")).toContainText("۱٫۵");
   await page.getByLabel("نام منبع تازه").fill("کارت تازه");
   await page
     .locator(".inline-form")
@@ -189,12 +189,14 @@ test("version, newest payment source and starred repeat shortcut", async ({
     .click();
   await page.getByRole("button", { name: "بازگشت به خانه" }).click();
   await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
-  await expect(page.getByRole("combobox", { name: "منبع پرداخت" })).toHaveValue(
-    await page
+  await expect(
+    page
       .getByRole("combobox", { name: "منبع پرداخت" })
-      .locator("option", { hasText: "کارت تازه" })
-      .getAttribute("value"),
-  );
+      .locator("option:checked"),
+  ).toHaveText("کارت روزمره");
+  await page
+    .getByRole("combobox", { name: "منبع پرداخت" })
+    .selectOption({ label: "کارت تازه" });
   await page.getByLabel("مبلغ (تومان)").fill("40000");
   await page
     .getByRole("combobox", { name: "دسته" })
@@ -206,6 +208,13 @@ test("version, newest payment source and starred repeat shortcut", async ({
     page.getByRole("button", { name: "ذخیره‌شده در تراکنش‌های پرتکرار" }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
+  await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
+  await expect(
+    page
+      .getByRole("combobox", { name: "منبع پرداخت" })
+      .locator("option:checked"),
+  ).toHaveText("کارت تازه");
+  await page.getByRole("button", { name: "بستن", exact: true }).click();
   await page
     .getByRole("button", { name: /ثبت دوباره خوراک، ۴۰٬۰۰۰ تومان/ })
     .click();
@@ -224,4 +233,41 @@ test("version, newest payment source and starred repeat shortcut", async ({
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   await expect(page.getByText("۸ نتیجه")).toBeVisible();
+});
+
+test("monthly backup toast appears once and can be dismissed", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  const toast = page.getByRole("status", { name: "یادآوری پشتیبان" });
+  await expect(toast).toBeVisible();
+  await expect(
+    toast.getByRole("button", { name: "دریافت پشتیبان" }),
+  ).toBeVisible();
+  const toastBounds = await toast.boundingBox();
+  const tabsBounds = await page.locator(".tabbar").boundingBox();
+  expect(
+    toastBounds &&
+      tabsBounds &&
+      toastBounds.y + toastBounds.height <= tabsBounds.y,
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+  ).toBe(false);
+  await page.locator("html").evaluate((element) => {
+    (element as HTMLElement).dataset.theme = "dark";
+  });
+  expect(
+    await toast.evaluate(
+      (element) => getComputedStyle(element).backgroundColor,
+    ),
+  ).toBe("rgb(34, 51, 42)");
+  await toast.getByRole("button", { name: "بستن یادآوری" }).click();
+  await expect(toast).not.toBeVisible();
+  await page.reload();
+  await expect(toast).not.toBeVisible();
 });

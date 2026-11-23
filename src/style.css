@@ -945,12 +945,51 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 2px;
 }
-.backup-reminder {
-  background: var(--sage);
+.backup-toast {
+  position: fixed;
+  z-index: 80;
+  inset-inline: 14px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  max-width: 520px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 44px 14px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--gold);
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.14);
+}
+.backup-toast strong {
   color: var(--primary);
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 12px;
+}
+.backup-toast p {
+  margin: 3px 0 0;
+  font-size: 13px;
+}
+.backup-toast-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--surface);
+  background: var(--primary);
+}
+.backup-toast-close {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
 }
 @media (max-width: 360px) {
   .filters {

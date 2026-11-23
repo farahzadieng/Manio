@@ -6,9 +6,9 @@ Manio is a Persian, right-to-left personal expense journal. It helps you record 
 
 Open [manio.luminiastudio.ir](https://manio.luminiastudio.ir) on your phone or computer. Choose an empty journal or try the demo on first launch. On iPhone, use Safari's **Share → Add to Home Screen** to install it as a PWA. Once the app has loaded and its assets have been cached, it can reopen offline.
 
-Add expenses and income from the home screen. Pick a category, date, and optional payment source; amounts are stored as integer Iranian tomans. The newest active payment source is selected automatically for a new expense and can be changed. Star a transaction while creating or editing it to place a reusable shortcut on Home. Selecting that shortcut starts a **new** transaction with the same amount, category, source, necessity, and note, dated today. Reports use Jalali periods and local filters. Obligations track debts, receivables, planned payments, and reminders separately from transactions.
+Add expenses and income from the home screen. Pick a category, date, and optional payment source; amounts are stored as integer Iranian tomans. New expenses preselect the source used by the most recently recorded transaction that still has an active source; you can change it. Star a transaction while creating or editing it to place a reusable shortcut on Home. Selecting that shortcut starts a **new** transaction with the same amount, category, source, necessity, and note, dated today. Reports use Jalali periods and local filters. Obligations track debts, receivables, planned payments, and reminders separately from transactions.
 
-Everything you enter stays in this browser's IndexedDB. Each device and each site hostname has separate data. The browser or operating system may erase local storage, so export a JSON backup from Settings regularly. Import that file on another device or hostname. CSV export is available for transactions. Manio does not upload financial data, and reminders only appear while the app is open or resumed.
+Everything you enter stays in this browser's IndexedDB. Each device and each site hostname has separate data. The browser or operating system may erase local storage, so export a JSON backup from Settings regularly. A small reminder appears once per Gregorian month when the app is open, unless you already backed up that month. Import a backup on another device or hostname. CSV export is available for transactions. Manio does not upload financial data, and reminders only appear while the app is open or resumed.
 
 ## Host your own copy on Cloudflare Pages
 
@@ -34,4 +34,4 @@ npm run e2e:offline
 npm run preview
 ```
 
-The stack is React, TypeScript, Vite, native IndexedDB, Zod, and Workbox. The app and bundled font/icons have no runtime CDN dependency. See [Architecture.md](Architecture.md) for the code map, [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for release details, and [docs/QA_REPORT.md](docs/QA_REPORT.md) for test scope and iPhone checks. The app version is 1.0 (`package.json` uses SemVer `1.0.0`).
+The stack is React, TypeScript, Vite, native IndexedDB, Zod, and Workbox. The app and bundled font/icons have no runtime CDN dependency. See [Architecture.md](Architecture.md) for the code map, [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for release details, and [docs/QA_REPORT.md](docs/QA_REPORT.md) for test scope and iPhone checks. The app version is 1.5 (`package.json` uses SemVer `1.5.0`).

@@ -134,7 +134,7 @@ export async function seedDemo() {
       metadata: [
         {
           id: "main",
-          schemaVersion: 3,
+          schemaVersion: 4,
           seedProvenance: "bundled-demo-v1",
           migratedAt: now,
         },
