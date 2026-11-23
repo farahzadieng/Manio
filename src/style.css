@@ -1027,31 +1027,35 @@ textarea:focus-visible {
   color: var(--muted);
 }
 
-/* Page movement follows the logical tab order. */
-.page-enter {
-  animation: page-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+/* Sequential page fade. The bottom navigation stays fixed and responsive. */
+.fade-through-page > * {
+  animation: fade-through-item 560ms cubic-bezier(0.2, 0, 0, 1) both;
 }
-.page-enter-reverse {
-  animation-name: page-enter-reverse;
+.fade-through-page > :nth-child(2) {
+  animation-delay: 45ms;
 }
-@keyframes page-enter {
+.fade-through-page > :nth-child(3) {
+  animation-delay: 85ms;
+}
+.fade-through-page > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.fade-through-page > :nth-child(5) {
+  animation-delay: 150ms;
+}
+.fade-through-page > :nth-child(n + 6) {
+  animation-delay: 175ms;
+}
+@keyframes fade-through-item {
   from {
-    opacity: 0.45;
-    transform: translateX(-28px) scale(0.985);
+    opacity: 0;
+    transform: translateY(9px);
+    filter: blur(2px);
   }
   to {
     opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-@keyframes page-enter-reverse {
-  from {
-    opacity: 0.45;
-    transform: translateX(28px) scale(0.985);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateY(0);
+    filter: blur(0);
   }
 }
 .tabbar button {
@@ -1252,8 +1256,7 @@ textarea:focus-visible {
   margin-bottom: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .page-enter,
-  .page-enter-reverse,
+  .fade-through-page > *,
   .select-menu {
     animation: none !important;
   }

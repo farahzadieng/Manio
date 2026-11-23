@@ -188,7 +188,7 @@ test("version, last used payment source and starred repeat shortcut", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "تنظیمات" }).click();
-  await expect(page.getByText("نسخه برنامه:")).toContainText("۲٫۰");
+  await expect(page.getByText("نسخه برنامه:")).toContainText("۲٫۱");
   await page.getByLabel("نام منبع تازه").fill("کارت تازه");
   await page
     .locator(".inline-form")
@@ -334,4 +334,23 @@ test("monthly behavior analysis persists and existing source gets a palette colo
   await expect(
     page.getByText("الگوی احتمالی: خرید پس از خستگی.", { exact: false }),
   ).toBeVisible();
+});
+
+test("tab content fades through and reduced-motion stays usable", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await expect(page.locator(".fade-through-page")).toBeVisible();
+  await page.getByRole("button", { name: "گزارش‌ها", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "گزارش‌ها" })).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "خانه", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "خانه" })).toBeVisible();
+  expect(
+    await page
+      .locator(".fade-through-page > *")
+      .first()
+      .evaluate((element) => getComputedStyle(element).animationName),
+  ).toBe("none");
 });

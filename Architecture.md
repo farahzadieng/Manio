@@ -1,4 +1,4 @@
-# Manio architecture (v2.0)
+# Manio architecture (v2.1)
 
 Manio is a static React PWA. IndexedDB is its only authoritative data store. The optional Gemini analysis uses a same-origin Cloudflare Pages Function; there is no login, sync, server database, or balance calculation. Start with the file for the feature you are changing.
 
@@ -14,7 +14,7 @@ Manio is a static React PWA. IndexedDB is its only authoritative data store. The
 | Backups                         | `src/lib/backup.ts`                                                             | Versioned JSON export/import, reference validation, atomic replace/merge, and CSV export. Merge keeps local records on ID collision. Older backups receive schema defaults.                                                                                                    |
 | Onboarding and obligations      | `src/lib/demo.ts`, `src/lib/recurrence.ts`                                      | Empty/demo first start; recurrence creates distinct due instances. Obligation completion offers a separate transaction without silent double counting.                                                                                                                         |
 | Date input and amounts          | `src/components/DatePicker.tsx`, `AmountInput.tsx`, `src/lib/amount-input.ts`   | Jalali UI converts to local ISO dates. Amounts group Persian digits while editing and parse to safe integer tomans.                                                                                                                                                            |
-| PWA and styles                  | `vite.config.ts`, `src/style.css`, `public/`                                    | Workbox precaches local assets; updates prompt before reload. CSS tokens support light/dark themes and iPhone safe areas.                                                                                                                                                      |
+| PWA and styles                  | `vite.config.ts`, `src/style.css`, `src/components/ui/fade-through.tsx`, `public/`                                    | Workbox precaches local assets; updates prompt before reload. CSS tokens support light/dark themes and iPhone safe areas. Motion handles sequential tab fades and respects reduced-motion preferences.                                                                                                                                                      |
 
 ## Transaction flow
 

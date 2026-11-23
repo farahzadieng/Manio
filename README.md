@@ -34,4 +34,4 @@ npm run e2e:offline
 npm run preview
 ```
 
-The stack is React, TypeScript, Vite, native IndexedDB, Zod, and Workbox. The app and bundled font/icons have no runtime CDN dependency. See [Architecture.md](Architecture.md) for the code map, [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for release details, and [docs/QA_REPORT.md](docs/QA_REPORT.md) for test scope and iPhone checks. The app version is 2.0.1 (`package.json` uses SemVer `2.0.1`).
+The stack is React, TypeScript, Vite, native IndexedDB, Zod, and Workbox. The app and bundled font/icons have no runtime CDN dependency. See [Architecture.md](Architecture.md) for the code map, [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for release details, and [docs/QA_REPORT.md](docs/QA_REPORT.md) for test scope and iPhone checks. The app version is 2.1 (`package.json` uses SemVer `2.1.0`).

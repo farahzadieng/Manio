@@ -1,6 +1,6 @@
 # Implementation status
 
-Phase: version 2.0 implementation complete; local release verification passed.
+Phase: version 2.1 implementation complete; local release verification passed.
 
 Decisions: Empty target directory became a static React/Vite app. IndexedDB is the sole authoritative data store. Amounts are positive safe integer tomans; aggregate overflow throws. Local civil Gregorian ISO dates are stored and converted to Jalali in the UI. The referenced MIT `shadcn-persian` DatePicker imports private `@workspace/ui` components and Base UI, so a self-contained Jalali adapter is used. Apple Calendar integration is a user-initiated copy fallback because a browser PWA cannot use EventKit or reliably open a prefilled native editor without an `.ics` workflow.
 
@@ -33,3 +33,7 @@ Version 2.0 update (2026-11-24): Tab transitions, custom dropdowns, source color
 Local v2 gate: lint, typecheck, 26 unit/integration tests, production build, 9 mobile browser E2E tests, 4 offline PWA tests, and `git diff --check` passed. Real Gemini calls and Cloudflare deployment require the user's key and production Pages environment.
 
 Version 2.0.1 refinement (2026-11-24): The financial behavior prompt now includes current and prior month expenses, weekdays, spending reasons and the latest prior-month analysis for evidence-backed progress review. Explicit response length caps were removed. Expense notes invite reasons and allow up to 1,000 Unicode code points.
+
+Version 2.1 update (2026-11-24): Replaced the 260 ms directional page entrance with a sequential Motion fade-through across the header and screen content. Screen groups enter with short stagger delays, navigation remains fixed, and reduced-motion settings disable the effect. Package version is 2.1.0.
+
+Local v2.1 gate: lint, typecheck, 28 unit/integration tests, production build, 10 mobile browser E2E tests, 4 offline PWA tests, visual review of mobile transition frames, and `git diff --check` passed.

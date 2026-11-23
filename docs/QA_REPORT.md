@@ -57,3 +57,7 @@ After push, GitHub CI for source commit `6eeb921` completed successfully. The pr
 Local release gate passed: lint, typecheck, 26 unit/integration tests, production build, 9 mobile Chromium E2E tests, 4 production offline PWA tests, and diff whitespace check. New browser coverage verifies analysis response storage after reload and editing an existing payment source color. The Gemini endpoint was tested with a mocked upstream; no private key or live Gemini charge was used. Cloudflare deployment and installed iOS Safari still need verification in their real environments.
 
 Version 2.0.1 prompt refinement (2026-11-24): Unit coverage checks prior-month context, repeated same-day spending, incomplete-month handling, and absence of an explicit output length cap. Mobile E2E checks that the next month’s request contains the saved prior-month recommendation. Live Gemini output quality still requires a user key and real service response.
+
+Version 2.1 transition update (2026-11-24): Browser coverage checks switching tabs with the sequential fade-through and verifies that reduced-motion removes the per-element animation. The bottom navigation remains available throughout the transition.
+
+Local v2.1 release gate: lint, typecheck, 28 unit tests, production build, 10 mobile Chromium E2E tests, 4 offline PWA tests, and whitespace check passed. Mobile transition frames were inspected at exit, entrance and settled states.

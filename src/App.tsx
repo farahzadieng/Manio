@@ -47,6 +47,7 @@ import type { Tab } from "./screens/types";
 import { HomeScreen } from "./screens/HomeScreen";
 import { TransactionsScreen } from "./screens/TransactionsScreen";
 import { ReportsScreen } from "./screens/ReportsScreen";
+import FadeThrough from "./components/ui/fade-through";
 const labels = {
   home: "خانه",
   transactions: "تراکنش‌ها",
@@ -62,19 +63,6 @@ const icons = {
 };
 function App() {
   const [tab, setTab] = useState<Tab>("home");
-  const previousTab = useRef<Tab>("home");
-  const tabOrder: Tab[] = [
-    "home",
-    "transactions",
-    "reports",
-    "obligations",
-    "settings",
-  ];
-  const direction =
-    tabOrder.indexOf(tab) >= tabOrder.indexOf(previousTab.current) ? 1 : -1;
-  useEffect(() => {
-    previousTab.current = tab;
-  }, [tab]);
   const [rows, setRows] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sources, setSources] = useState<PaymentSource[]>([]);
@@ -405,112 +393,111 @@ function App() {
   return (
     <div className="app">
       <div className="safe-top" />
-      <header className="topbar">
-        <div>
-          <span className="eyebrow">مانیو · دفتر خرج شخصی</span>
-          <h1>{labels[tab]}</h1>
-        </div>
-        <button
-          className="icon-button"
-          onClick={() => setTab(tab === "settings" ? "home" : "settings")}
-          aria-label={tab === "settings" ? "بازگشت به خانه" : "تنظیمات"}
-        >
-          {tab === "settings" ? <ArrowRight /> : <SettingsIcon />}
-        </button>
-      </header>
-      <main
-        key={tab}
-        className={`content page-enter ${direction < 0 ? "page-enter-reverse" : ""}`}
-      >
-        {error && (
-          <div className="error notice" role="alert">
-            {error}
-            <button aria-label="بستن خطا" onClick={() => setError("")}>
-              <X size={18} />
-            </button>
+      <FadeThrough pageKey={tab}>
+        <header className="topbar">
+          <div>
+            <span className="eyebrow">مانیو · دفتر خرج شخصی</span>
+            <h1>{labels[tab]}</h1>
           </div>
-        )}
-        {tab === "home" && (
-          <HomeScreen
-            selectedRange={selectedRange}
-            summary={summary}
-            rows={rows}
-            obligations={obligations}
-            frequent={frequent}
-            changeMonth={changeMonth}
-            setEditor={setEditor}
-            setTab={setTab}
-            setObEditor={setObEditor}
-          />
-        )}
-        {tab === "transactions" && (
-          <TransactionsScreen
-            filters={filters}
-            setFilters={setFilters}
-            filtered={filtered}
-            categories={categories}
-            sources={sources}
-            setEditor={setEditor}
-          />
-        )}
-        {tab === "reports" && (
-          <ReportsScreen
-            reportPeriod={reportPeriod}
-            setReportPeriod={setReportPeriod}
-            selectedRange={selectedRange}
-            changeMonth={changeMonth}
-            reportAnchor={reportAnchor}
-            setReportAnchor={setReportAnchor}
-            reportFilters={reportFilters}
-            setReportFilters={setReportFilters}
-            categories={categories}
-            sources={sources}
-            reportSummary={reportSummary}
-            incomeSummary={incomeSummary}
-            reportRange={reportRange}
-            trend={trend}
-            trendMax={trendMax}
-            rows={rows}
-            compareMonth={compareMonth}
-            setCompareMonth={setCompareMonth}
-            setFilters={setFilters}
-            setTab={setTab}
-            reportMonth={month}
-            geminiApiKey={settings.geminiApiKey}
-          />
-        )}
-        {tab === "obligations" && (
-          <Obligations
-            items={obligations}
-            onEdit={setObEditor}
-            onRefresh={refresh}
-            onCreateTransaction={(kind, amount, obligationId, title) =>
-              setEditor({
-                kind,
-                presetAmount: amount,
-                presetNote: title,
-                obligationId,
-              })
-            }
-          />
-        )}
-        {tab === "settings" && (
-          <SettingsScreen
-            settings={settings}
-            categories={categories}
-            sources={sources}
-            rows={rows}
-            save={saveSetting}
-            refresh={refresh}
-            onExport={exportData}
-            onImport={onImport}
-            onReset={erase}
-            onCheckUpdate={checkUpdateNow}
-            checkingUpdate={checkingUpdate}
-            updateMessage={updateMessage}
-          />
-        )}
-      </main>
+          <button
+            className="icon-button"
+            onClick={() => setTab(tab === "settings" ? "home" : "settings")}
+            aria-label={tab === "settings" ? "بازگشت به خانه" : "تنظیمات"}
+          >
+            {tab === "settings" ? <ArrowRight /> : <SettingsIcon />}
+          </button>
+        </header>
+        <main className="content fade-through-page">
+          {error && (
+            <div className="error notice" role="alert">
+              {error}
+              <button aria-label="بستن خطا" onClick={() => setError("")}>
+                <X size={18} />
+              </button>
+            </div>
+          )}
+          {tab === "home" && (
+            <HomeScreen
+              selectedRange={selectedRange}
+              summary={summary}
+              rows={rows}
+              obligations={obligations}
+              frequent={frequent}
+              changeMonth={changeMonth}
+              setEditor={setEditor}
+              setTab={setTab}
+              setObEditor={setObEditor}
+            />
+          )}
+          {tab === "transactions" && (
+            <TransactionsScreen
+              filters={filters}
+              setFilters={setFilters}
+              filtered={filtered}
+              categories={categories}
+              sources={sources}
+              setEditor={setEditor}
+            />
+          )}
+          {tab === "reports" && (
+            <ReportsScreen
+              reportPeriod={reportPeriod}
+              setReportPeriod={setReportPeriod}
+              selectedRange={selectedRange}
+              changeMonth={changeMonth}
+              reportAnchor={reportAnchor}
+              setReportAnchor={setReportAnchor}
+              reportFilters={reportFilters}
+              setReportFilters={setReportFilters}
+              categories={categories}
+              sources={sources}
+              reportSummary={reportSummary}
+              incomeSummary={incomeSummary}
+              reportRange={reportRange}
+              trend={trend}
+              trendMax={trendMax}
+              rows={rows}
+              compareMonth={compareMonth}
+              setCompareMonth={setCompareMonth}
+              setFilters={setFilters}
+              setTab={setTab}
+              reportMonth={month}
+              geminiApiKey={settings.geminiApiKey}
+            />
+          )}
+          {tab === "obligations" && (
+            <Obligations
+              items={obligations}
+              onEdit={setObEditor}
+              onRefresh={refresh}
+              onCreateTransaction={(kind, amount, obligationId, title) =>
+                setEditor({
+                  kind,
+                  presetAmount: amount,
+                  presetNote: title,
+                  obligationId,
+                })
+              }
+            />
+          )}
+          {tab === "settings" && (
+            <SettingsScreen
+              settings={settings}
+              categories={categories}
+              sources={sources}
+              rows={rows}
+              save={saveSetting}
+              refresh={refresh}
+              onExport={exportData}
+              onImport={onImport}
+              onReset={erase}
+              onCheckUpdate={checkUpdateNow}
+              checkingUpdate={checkingUpdate}
+              updateMessage={updateMessage}
+            />
+          )}
+        </main>
+      </FadeThrough>
       <nav className="tabbar" aria-label="ناوبری اصلی">
         {(Object.keys(icons) as (keyof typeof icons)[]).map((key) => {
           const Icon = icons[key];
