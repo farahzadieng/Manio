@@ -31,3 +31,5 @@ Release status (2026-11-23): source commit `6eeb921` was pushed to `origin/main`
 Version 2.0 update (2026-11-24): Tab transitions, custom dropdowns, source color palette and editing, optional financial behavior prompt/Gemini analysis via Cloudflare Pages Function, and locally stored monthly analysis history. IndexedDB v5 migrates settings and adds analyses. Gemini key is excluded from JSON backups. Package version is 2.0.0.
 
 Local v2 gate: lint, typecheck, 26 unit/integration tests, production build, 9 mobile browser E2E tests, 4 offline PWA tests, and `git diff --check` passed. Real Gemini calls and Cloudflare deployment require the user's key and production Pages environment.
+
+Version 2.0.1 refinement (2026-11-24): The financial behavior prompt now includes current and prior month expenses, weekdays, spending reasons and the latest prior-month analysis for evidence-backed progress review. Explicit response length caps were removed. Expense notes invite reasons and allow up to 1,000 Unicode code points.

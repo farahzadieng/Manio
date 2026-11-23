@@ -38,8 +38,8 @@ describe("local domain", () => {
     expect(() => parseAmount("12.3")).toThrow();
   });
   it("validates note by Unicode code points", () => {
-    expect(note.safeParse("😀".repeat(250)).success).toBe(true);
-    expect(note.safeParse("😀".repeat(251)).success).toBe(false);
+    expect(note.safeParse("😀".repeat(1000)).success).toBe(true);
+    expect(note.safeParse("😀".repeat(1001)).success).toBe(false);
   });
   it("handles Jalali new year and month boundaries", () => {
     expect(fromJalali(1405, 1, 1)).toBe("2026-03-21");

@@ -12,7 +12,7 @@ test("empty start, create/edit/repeat/delete expense and search", async ({
   await page
     .getByRole("combobox", { name: "دسته" })
     .selectOption({ label: "🍽️ خوراک" });
-  await page.getByLabel("یادداشت (اختیاری)").fill("VPN تست");
+  await page.getByLabel("توضیحات و علت هزینه").fill("VPN تست");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   await page.getByPlaceholder("جست‌وجو در یادداشت، دسته یا منبع").fill("vpn");
@@ -283,16 +283,23 @@ test("monthly backup toast appears once and can be dismissed", async ({
 test("monthly behavior analysis persists and existing source gets a palette color", async ({
   page,
 }) => {
+  let analysisRequests = 0;
   await page.route("**/api/analyze", async (route) => {
     const body = route.request().postDataJSON();
-    expect(body.prompt).toContain("| تاریخ | عنوان | هزینه (تومان) |");
+    expect(body.prompt).toContain(
+      "| تاریخ و روز هفته | عنوان | هزینه (تومان) |",
+    );
     expect(route.request().headers()["x-gemini-key"]).toBe("test-key");
+    if (analysisRequests === 1)
+      expect(body.prompt).toContain("پیشنهاد ماه قبل: ثبت علت خرید پس از کار.");
+    const text =
+      analysisRequests++ === 0
+        ? "پیشنهاد ماه قبل: ثبت علت خرید پس از کار."
+        : "الگوی احتمالی: خرید پس از خستگی.\nآزمایش کوچک هفتهٔ بعد: پیش از خرید مکث کنید.";
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({
-        text: "الگوی احتمالی: خرید پس از خستگی.\nآزمایش کوچک هفتهٔ بعد: پیش از خرید مکث کنید.",
-      }),
+      body: JSON.stringify({ text }),
     });
   });
   await page.goto("/");
@@ -309,6 +316,14 @@ test("monthly behavior analysis persists and existing source gets a palette colo
     "rgb(37, 99, 235)",
   );
   await page.getByRole("button", { name: "گزارش‌ها", exact: true }).click();
+  await page.getByRole("button", { name: "ماه قبل", exact: true }).click();
+  await page.getByRole("button", { name: "تحلیل با Gemini" }).click();
+  await expect(
+    page.getByText("پیشنهاد ماه قبل: ثبت علت خرید پس از کار.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "ماه بعد", exact: true }).click();
   await page.getByRole("button", { name: "تحلیل با Gemini" }).click();
   await expect(
     page.getByText("الگوی احتمالی: خرید پس از خستگی.", { exact: false }),

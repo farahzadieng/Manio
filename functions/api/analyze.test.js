@@ -3,22 +3,20 @@ import { onRequestPost } from "./analyze.js";
 
 describe("Cloudflare Gemini route", () => {
   it("passes a prompt through Cloudflare and returns only generated text", async () => {
-    const upstream = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            candidates: [
-              {
-                content: {
-                  parts: [{ text: "الگوی احتمالی: مکث پیش از خرید." }],
-                },
+    const upstream = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "الگوی احتمالی: مکث پیش از خرید." }],
               },
-            ],
-          }),
-          { status: 200 },
-        ),
-      );
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
     vi.stubGlobal("fetch", upstream);
     const request = new Request("https://manio.example/api/analyze", {
       method: "POST",
@@ -36,6 +34,8 @@ describe("Cloudflare Gemini route", () => {
     expect(upstream.mock.calls[0][1].headers["x-goog-api-key"]).toBe(
       "test-key",
     );
+    const requestBody = JSON.parse(upstream.mock.calls[0][1].body);
+    expect(requestBody.generationConfig).not.toHaveProperty("maxOutputTokens");
     vi.unstubAllGlobals();
   });
 });

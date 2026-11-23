@@ -315,10 +315,7 @@ export function ReportsScreen({
       </div>
       {reportPeriod === "month" && (
         <FinancialAnalysisPanel
-          rows={filterTransactions(rows, {
-            from: selectedRange[0],
-            to: selectedRange[1],
-          })}
+          rows={rows}
           year={reportMonth.y}
           month={reportMonth.m}
           apiKey={geminiApiKey}

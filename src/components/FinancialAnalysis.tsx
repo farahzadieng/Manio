@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Sparkles } from "lucide-react";
 import { all, put } from "../lib/db";
 import {
   type FinancialAnalysis,
   type Transaction,
+  filterTransactions,
+  jalaliMonthRange,
   persianNumber,
 } from "../lib/domain";
 import {
   analysisMonth,
   buildFinancialPrompt,
+  previousJalaliMonth,
   requestFinancialAnalysis,
 } from "../lib/financial-analysis";
 
@@ -27,17 +30,43 @@ export function FinancialAnalysisPanel({
 }) {
   const key = analysisMonth(year, month);
   const [history, setHistory] = useState<FinancialAnalysis[]>([]);
+  const [historyReady, setHistoryReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const prompt = useMemo(
-    () => buildFinancialPrompt(rows, year, month),
-    [rows, year, month],
+  const [currentFrom, currentTo] = jalaliMonthRange(year, month);
+  const previous = previousJalaliMonth(year, month);
+  const [previousFrom, previousTo] = jalaliMonthRange(
+    previous.year,
+    previous.month,
   );
+  const currentRows = filterTransactions(rows, {
+    from: currentFrom,
+    to: currentTo,
+  });
+  const previousRows = filterTransactions(rows, {
+    from: previousFrom,
+    to: previousTo,
+  });
+  const previousAnalysis = history
+    .filter(
+      (entry) => entry.month === analysisMonth(previous.year, previous.month),
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  const prompt = buildFinancialPrompt({
+    currentRows,
+    previousRows,
+    previousAnalysis,
+    year,
+    month,
+  });
   useEffect(() => {
     let active = true;
     all("analyses")
       .then((items) => {
-        if (active) setHistory(items);
+        if (active) {
+          setHistory(items);
+          setHistoryReady(true);
+        }
       })
       .catch((error) => {
         if (active) setMessage(String(error));
@@ -72,7 +101,8 @@ export function FinancialAnalysisPanel({
         id: crypto.randomUUID(),
         month: key,
         text,
-        transactionCount: rows.filter((row) => row.kind === "expense").length,
+        transactionCount: currentRows.filter((row) => row.kind === "expense")
+          .length,
         createdAt: now,
         updatedAt: now,
       };
@@ -94,10 +124,14 @@ export function FinancialAnalysisPanel({
         نگاهی کوتاه به الگوها و محرک‌های احتمالی خرج‌کردن در این ماه.
       </p>
       <div className="analysis-actions">
-        <button className="secondary" onClick={copy}>
+        <button className="secondary" onClick={copy} disabled={!historyReady}>
           <Copy size={17} /> کپی پرامپت
         </button>
-        <button className="primary" onClick={analyze} disabled={busy}>
+        <button
+          className="primary"
+          onClick={analyze}
+          disabled={busy || !historyReady}
+        >
           <Sparkles size={17} /> {busy ? "در حال تحلیل…" : "تحلیل با Gemini"}
         </button>
       </div>
@@ -107,8 +141,9 @@ export function FinancialAnalysisPanel({
         </p>
       )}
       <p className="muted tiny">
-        برای Gemini، جدول هزینه‌های این ماه از طریق Cloudflare به Google ارسال
-        می‌شود. تحلیل‌های دریافتی روی همین دستگاه ذخیره می‌شوند.
+        برای Gemini، هزینه‌های این ماه و ماه قبل و در صورت وجود، آخرین تحلیل ماه
+        قبل از طریق Cloudflare به Google ارسال می‌شوند. تحلیل‌های دریافتی روی
+        همین دستگاه ذخیره می‌شوند.
       </p>
       {message && (
         <p role="status" className="analysis-message">

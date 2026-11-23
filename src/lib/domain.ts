@@ -16,7 +16,7 @@ export const isoDate = z
   }, "تاریخ نامعتبر است");
 export const note = z
   .string()
-  .refine((v) => [...v].length <= 250, "یادداشت بیش از ۲۵۰ نویسه است");
+  .refine((v) => [...v].length <= 1000, "توضیحات بیش از ۱۰۰۰ نویسه است");
 const timestamp = z.iso.datetime();
 const base = {
   id: z.string().uuid(),

@@ -14,7 +14,7 @@ export async function onRequestPost({ request }) {
   const key = request.headers.get("X-Gemini-Key")?.trim();
   if (!key || key.length > 512)
     return json({ error: "کلید Gemini را در تنظیمات وارد کنید." }, 400);
-  if (Number(request.headers.get("Content-Length")) > 100_000)
+  if (Number(request.headers.get("Content-Length")) > 600_000)
     return json({ error: "حجم داده بیش از حد مجاز است." }, 413);
   let input;
   try {
@@ -25,7 +25,7 @@ export async function onRequestPost({ request }) {
   if (
     typeof input?.prompt !== "string" ||
     !input.prompt.trim() ||
-    input.prompt.length > 80_000
+    input.prompt.length > 500_000
   )
     return json({ error: "پرامپت نامعتبر است." }, 400);
   try {
@@ -36,7 +36,7 @@ export async function onRequestPost({ request }) {
         headers: { "Content-Type": "application/json", "x-goog-api-key": key },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: input.prompt }] }],
-          generationConfig: { temperature: 0.45, maxOutputTokens: 900 },
+          generationConfig: { temperature: 0.7 },
         }),
       },
     );

@@ -243,14 +243,19 @@ export function TransactionEditor({
         </label>
         <DatePicker value={date} onChange={setDate} label="انتخاب تاریخ" />
         <label>
-          یادداشت (اختیاری)
+          {kind === "expense" ? "توضیحات و علت هزینه" : "توضیحات (اختیاری)"}
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            maxLength={500}
+            maxLength={1000}
+            placeholder={
+              kind === "expense"
+                ? "مثلاً تاکسی گرفتم چون تا دیروقت سر کار بودم و خسته شدم"
+                : "توضیح این درآمد"
+            }
             rows={2}
           />
-          <small>{persianNumber([...text].length)} / ۲۵۰</small>
+          <small>{persianNumber([...text].length)} / ۱٬۰۰۰</small>
         </label>
         {error && (
           <p role="alert" className="error">
