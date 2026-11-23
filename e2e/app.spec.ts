@@ -284,14 +284,15 @@ test("monthly behavior analysis persists and existing source gets a palette colo
   page,
 }) => {
   let analysisRequests = 0;
-  await page.route("**/api/analyze", async (route) => {
+  await page.route("https://generativelanguage.googleapis.com/**:generateContent", async (route) => {
     const body = route.request().postDataJSON();
-    expect(body.prompt).toContain(
+    const prompt = body.contents[0].parts[0].text;
+    expect(prompt).toContain(
       "| تاریخ و روز هفته | عنوان | هزینه (تومان) |",
     );
-    expect(route.request().headers()["x-gemini-key"]).toBe("test-key");
+    expect(route.request().headers()["x-goog-api-key"]).toBe("test-key");
     if (analysisRequests === 1)
-      expect(body.prompt).toContain("پیشنهاد ماه قبل: ثبت علت خرید پس از کار.");
+      expect(prompt).toContain("پیشنهاد ماه قبل: ثبت علت خرید پس از کار.");
     const text =
       analysisRequests++ === 0
         ? "پیشنهاد ماه قبل: ثبت علت خرید پس از کار."
@@ -299,7 +300,7 @@ test("monthly behavior analysis persists and existing source gets a palette colo
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] }),
     });
   });
   await page.goto("/");

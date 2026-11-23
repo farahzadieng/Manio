@@ -144,7 +144,7 @@ export function SettingsScreen({
         )}
         <small>
           کلید در پشتیبان JSON قرار نمی‌گیرد. هنگام تحلیل، کلید و داده‌های هزینه
-          به Cloudflare و سپس Gemini ارسال می‌شوند.
+          مستقیماً به Gemini ارسال می‌شوند.
         </small>
       </div>
       <Section title="دسته‌ها" />

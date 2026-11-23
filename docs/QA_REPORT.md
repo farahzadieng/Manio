@@ -61,3 +61,7 @@ Version 2.0.1 prompt refinement (2026-11-24): Unit coverage checks prior-month c
 Version 2.1 transition update (2026-11-24): Browser coverage checks switching tabs with the sequential fade-through and verifies that reduced-motion removes the per-element animation. The bottom navigation remains available throughout the transition.
 
 Local v2.1 release gate: lint, typecheck, 28 unit tests, production build, 10 mobile Chromium E2E tests, 4 offline PWA tests, and whitespace check passed. Mobile transition frames were inspected at exit, entrance and settled states.
+
+## Version 2.1.1 Gemini connection repair — 2026-11-24
+
+The deployed site's `POST /api/analyze` returned HTTP 405, so the Cloudflare Function path could not complete an analysis. A real Chromium request from the local app origin to Google's `generateContent` endpoint reached Google and returned HTTP 400 `API_KEY_INVALID` for a deliberately invalid test key, confirming browser CORS and network access without using a private key. The app now requests Gemini directly and its CSP permits only Google's Gemini API as an additional connection origin. Local release checks passed: lint, typecheck, 29 unit tests, build, 10 browser E2E tests, and 4 offline PWA tests. A real successful analysis still requires the user's own key and a post-deployment check on their device.

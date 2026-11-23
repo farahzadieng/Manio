@@ -122,16 +122,43 @@ export async function requestFinancialAnalysis(
   prompt: string,
   apiKey: string,
 ): Promise<string> {
-  const response = await fetch("/api/analyze", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Gemini-Key": apiKey },
-    body: JSON.stringify({ prompt }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7 },
+        }),
+      },
+    );
+  } catch {
+    throw new Error("ارتباط با Gemini برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.");
+  }
   const data = (await response.json().catch(() => ({}))) as {
-    text?: string;
-    error?: string;
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+    }>;
   };
-  if (!response.ok) throw new Error(data.error || "دریافت تحلیل انجام نشد.");
-  if (!data.text?.trim()) throw new Error("پاسخ متنی از Gemini دریافت نشد.");
-  return data.text.trim();
+  if (!response.ok) {
+    if (response.status === 429)
+      throw new Error("سقف استفاده از Gemini پر شده است؛ کمی بعد دوباره تلاش کنید.");
+    if (response.status === 400 || response.status === 401 || response.status === 403)
+      throw new Error("کلید Gemini یا دسترسی آن به مدل را بررسی کنید.");
+    if (response.status === 404)
+      throw new Error("مدل Gemini در دسترس این کلید نیست.");
+    throw new Error(`Gemini پاسخ نداد (خطای ${response.status}). دوباره تلاش کنید.`);
+  }
+  const text = data.candidates?.[0]?.content?.parts
+    ?.map((part) => part.text || "")
+    .join("\n")
+    .trim();
+  if (!text) throw new Error("Gemini پاسخ متنی تولید نکرد. دوباره تلاش کنید.");
+  return text;
 }

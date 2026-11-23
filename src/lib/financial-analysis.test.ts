@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildFinancialPrompt,
   previousJalaliMonth,
+  requestFinancialAnalysis,
 } from "./financial-analysis";
 import type { Transaction } from "./domain";
 
@@ -84,5 +85,29 @@ describe("financial analysis prompt", () => {
     });
     expect(prompt).toContain("برای ماه قبل تحلیل ذخیره‌شده‌ای وجود ندارد");
     expect(prompt).toContain("دربارهٔ اجرای توصیه‌های قبلی ادعا نکن");
+  });
+});
+
+describe("direct Gemini request", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends the prompt and key to Gemini and extracts generated text", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "تحلیل روشن" }] } }] }), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(requestFinancialAnalysis("پرامپت", "test-key")).resolves.toBe("تحلیل روشن");
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
+    expect(options.headers["x-goog-api-key"]).toBe("test-key");
+    expect(JSON.parse(options.body)).toMatchObject({ contents: [{ role: "user", parts: [{ text: "پرامپت" }] }] });
+    expect(JSON.parse(options.body).generationConfig).not.toHaveProperty("maxOutputTokens");
+  });
+
+  it("reports invalid keys and network failures without exposing the key", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("{}", { status: 400 })));
+    await expect(requestFinancialAnalysis("پرامپت", "secret-test-key")).rejects.toThrow("کلید Gemini");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Load failed")));
+    await expect(requestFinancialAnalysis("پرامپت", "secret-test-key")).rejects.toThrow("ارتباط با Gemini برقرار نشد");
   });
 });

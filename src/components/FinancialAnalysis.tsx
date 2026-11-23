@@ -142,7 +142,7 @@ export function FinancialAnalysisPanel({
       )}
       <p className="muted tiny">
         برای Gemini، هزینه‌های این ماه و ماه قبل و در صورت وجود، آخرین تحلیل ماه
-        قبل از طریق Cloudflare به Google ارسال می‌شوند. تحلیل‌های دریافتی روی
+        قبل مستقیماً به Google ارسال می‌شوند. تحلیل‌های دریافتی روی
         همین دستگاه ذخیره می‌شوند.
       </p>
       {message && (
