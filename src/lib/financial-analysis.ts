@@ -122,43 +122,59 @@ export async function requestFinancialAnalysis(
   prompt: string,
   apiKey: string,
 ): Promise<string> {
-  let response: Response;
-  try {
-    response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.7 },
-        }),
-      },
-    );
-  } catch {
-    throw new Error("ارتباط با Gemini برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.");
+  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+  const body = JSON.stringify({
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.7 },
+  });
+  let lastStatus = 503;
+  for (const [modelIndex, model] of models.entries()) {
+    const attempts = modelIndex === 0 ? 2 : 1;
+    for (let attempt = 0; attempt < attempts; attempt++) {
+      if (attempt) await new Promise((resolve) => setTimeout(resolve, 800));
+      let response: Response;
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey,
+            },
+            body,
+          },
+        );
+      } catch {
+        throw new Error("ارتباط با Gemini برقرار نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.");
+      }
+      const data = (await response.json().catch(() => ({}))) as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      };
+      if (response.ok) {
+        const text = data.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text || "")
+          .join("\n")
+          .trim();
+        if (!text) throw new Error("Gemini پاسخ متنی تولید نکرد. دوباره تلاش کنید.");
+        return text;
+      }
+      if ([429, 503, 504].includes(response.status)) {
+        lastStatus = response.status;
+        if (response.status === 429 || modelIndex > 0) break;
+        continue;
+      }
+      if (response.status === 404 && modelIndex === 0) break;
+      if ([400, 401, 403].includes(response.status))
+        throw new Error("کلید Gemini یا دسترسی آن به مدل را بررسی کنید.");
+      if (response.status === 404)
+        throw new Error("مدل‌های Gemini در دسترس این کلید نیستند.");
+      throw new Error(`Gemini پاسخ نداد (خطای ${response.status}). دوباره تلاش کنید.`);
+    }
   }
-  const data = (await response.json().catch(() => ({}))) as {
-    candidates?: Array<{
-      content?: { parts?: Array<{ text?: string }> };
-    }>;
-  };
-  if (!response.ok) {
-    if (response.status === 429)
-      throw new Error("سقف استفاده از Gemini پر شده است؛ کمی بعد دوباره تلاش کنید.");
-    if (response.status === 400 || response.status === 401 || response.status === 403)
-      throw new Error("کلید Gemini یا دسترسی آن به مدل را بررسی کنید.");
-    if (response.status === 404)
-      throw new Error("مدل Gemini در دسترس این کلید نیست.");
-    throw new Error(`Gemini پاسخ نداد (خطای ${response.status}). دوباره تلاش کنید.`);
-  }
-  const text = data.candidates?.[0]?.content?.parts
-    ?.map((part) => part.text || "")
-    .join("\n")
-    .trim();
-  if (!text) throw new Error("Gemini پاسخ متنی تولید نکرد. دوباره تلاش کنید.");
-  return text;
+  throw new Error(
+    lastStatus === 429
+      ? "سهمیهٔ این کلید Gemini پر شده است. کمی بعد دوباره تلاش کنید یا پاسخ ایجنت خودتان را دستی ثبت کنید."
+      : "مدل‌های Gemini فعلاً شلوغ‌اند. کمی بعد دوباره تلاش کنید یا پاسخ ایجنت خودتان را دستی ثبت کنید.",
+  );
 }

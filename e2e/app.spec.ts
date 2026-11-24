@@ -337,6 +337,30 @@ test("monthly behavior analysis persists and existing source gets a palette colo
   ).toBeVisible();
 });
 
+test("copied prompt accepts a manual agent response and keeps it for the next month", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.getByRole("button", { name: "گزارش‌ها", exact: true }).click();
+  await page.getByRole("button", { name: "کپی پرامپت" }).click();
+  await expect(page.getByText("پاسخ ایجنت خودتون رو وارد کنید تا برای آینده ثبت بشه.")).toBeVisible();
+  await page.getByRole("button", { name: "ثبت پاسخ ایجنت" }).click();
+  await page.getByLabel("پاسخ ایجنت", { exact: true }).fill("تحلیل دستی: خرید پس از خستگی را با استراحت کوتاه جایگزین کن.");
+  await page.getByRole("button", { name: "ذخیره تحلیل این ماه" }).click();
+  await expect(page.getByRole("dialog", { name: "ثبت پاسخ ایجنت" })).not.toBeVisible();
+  await expect(page.getByText("پاسخ ایجنت برای این ماه ذخیره شد.")).toBeVisible();
+  await expect(page.getByText("تحلیل دستی: خرید پس از خستگی را با استراحت کوتاه جایگزین کن.")).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "دیدن گزارش‌ها ←" }).click();
+  await expect(page.getByText("تحلیل دستی: خرید پس از خستگی را با استراحت کوتاه جایگزین کن.")).toBeVisible();
+  await page.getByRole("button", { name: "ماه بعد", exact: true }).click();
+  await page.getByRole("button", { name: "کپی پرامپت" }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("تحلیل دستی: خرید پس از خستگی را با استراحت کوتاه جایگزین کن.");
+});
+
 test("tab content fades through and reduced-motion stays usable", async ({
   page,
 }) => {

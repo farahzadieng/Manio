@@ -144,7 +144,8 @@ export function SettingsScreen({
         )}
         <small>
           کلید در پشتیبان JSON قرار نمی‌گیرد. هنگام تحلیل، کلید و داده‌های هزینه
-          مستقیماً به Gemini ارسال می‌شوند.
+          مستقیماً به Gemini ارسال می‌شوند. برنامه از Gemini 2.5 Flash استفاده می‌کند
+          و هنگام شلوغی سرویس، Flash-Lite را هم امتحان می‌کند.
         </small>
       </div>
       <Section title="دسته‌ها" />

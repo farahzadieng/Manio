@@ -98,7 +98,7 @@ describe("direct Gemini request", () => {
     vi.stubGlobal("fetch", fetchMock);
     await expect(requestFinancialAnalysis("پرامپت", "test-key")).resolves.toBe("تحلیل روشن");
     const [url, options] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
+    expect(url).toBe("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent");
     expect(options.headers["x-goog-api-key"]).toBe("test-key");
     expect(JSON.parse(options.body)).toMatchObject({ contents: [{ role: "user", parts: [{ text: "پرامپت" }] }] });
     expect(JSON.parse(options.body).generationConfig).not.toHaveProperty("maxOutputTokens");
@@ -109,5 +109,33 @@ describe("direct Gemini request", () => {
     await expect(requestFinancialAnalysis("پرامپت", "secret-test-key")).rejects.toThrow("کلید Gemini");
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Load failed")));
     await expect(requestFinancialAnalysis("پرامپت", "secret-test-key")).rejects.toThrow("ارتباط با Gemini برقرار نشد");
+  });
+
+  it("retries a temporary 503 and falls back to Flash-Lite", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "پاسخ جایگزین" }] } }] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(requestFinancialAnalysis("پرامپت", "test-key")).resolves.toBe("پاسخ جایگزین");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[2][0]).toContain("gemini-2.5-flash-lite");
+  });
+
+  it("does not retry an invalid key", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 403 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(requestFinancialAnalysis("پرامپت", "bad-key")).rejects.toThrow("کلید Gemini");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("tries Flash-Lite when the primary model reaches a quota limit", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 429 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "تحلیل دوم" }] } }] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(requestFinancialAnalysis("پرامپت", "test-key")).resolves.toBe("تحلیل دوم");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toContain("gemini-2.5-flash-lite");
   });
 });

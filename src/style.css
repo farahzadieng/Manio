@@ -1237,6 +1237,37 @@ textarea:focus-visible {
   border-radius: 10px;
   font-size: 13px;
 }
+.analysis-copy-notice {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px;
+  background: var(--sage);
+  border-radius: 14px;
+  line-height: 1.7;
+}
+.analysis-copy-notice button {
+  justify-self: start;
+  min-height: 44px;
+}
+.analysis-manual-modal label {
+  display: block;
+  margin-top: 16px;
+  font-weight: 600;
+}
+.analysis-manual-modal textarea {
+  min-height: min(38dvh, 340px);
+  line-height: 1.8;
+}
+.analysis-manual-save {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 14px;
+}
+.analysis-manual-error {
+  color: var(--danger);
+  font-size: 13px;
+}
 .analysis-history {
   display: grid;
   gap: 10px;

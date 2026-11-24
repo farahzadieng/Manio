@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Copy, Sparkles } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Copy, Sparkles, X } from "lucide-react";
 import { all, put } from "../lib/db";
 import {
   type FinancialAnalysis,
@@ -33,6 +34,11 @@ export function FinancialAnalysisPanel({
   const [historyReady, setHistoryReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualText, setManualText] = useState("");
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualError, setManualError] = useState("");
   const [currentFrom, currentTo] = jalaliMonthRange(year, month);
   const previous = previousJalaliMonth(year, month);
   const [previousFrom, previousTo] = jalaliMonthRange(
@@ -82,8 +88,43 @@ export function FinancialAnalysisPanel({
     try {
       await navigator.clipboard.writeText(prompt);
       setMessage("پرامپت تحلیل کپی شد.");
+      setCopied(true);
     } catch {
       setMessage("دسترسی به کلیپ‌بورد ممکن نشد.");
+    }
+  };
+  const saveAnalysis = async (text: string) => {
+    const now = new Date().toISOString();
+    const entry: FinancialAnalysis = {
+      id: crypto.randomUUID(),
+      month: key,
+      text,
+      transactionCount: currentRows.filter((row) => row.kind === "expense")
+        .length,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await put("analyses", entry);
+    setHistory((items) => [...items, entry]);
+  };
+  const saveManual = async () => {
+    const text = manualText.trim();
+    if (!text) {
+      setManualError("پاسخ ایجنت را وارد کنید.");
+      return;
+    }
+    if (manualSaving) return;
+    setManualSaving(true);
+    setManualError("");
+    try {
+      await saveAnalysis(text);
+      setManualOpen(false);
+      setManualText("");
+      setMessage("پاسخ ایجنت برای این ماه ذخیره شد.");
+    } catch {
+      setManualError("ذخیره پاسخ ممکن نشد. دوباره تلاش کنید.");
+    } finally {
+      setManualSaving(false);
     }
   };
   const analyze = async () => {
@@ -96,18 +137,7 @@ export function FinancialAnalysisPanel({
     setMessage("");
     try {
       const text = await requestFinancialAnalysis(prompt, apiKey.trim());
-      const now = new Date().toISOString();
-      const entry: FinancialAnalysis = {
-        id: crypto.randomUUID(),
-        month: key,
-        text,
-        transactionCount: currentRows.filter((row) => row.kind === "expense")
-          .length,
-        createdAt: now,
-        updatedAt: now,
-      };
-      await put("analyses", entry);
-      setHistory((items) => [...items, entry]);
+      await saveAnalysis(text);
       setMessage("تحلیل تازه ذخیره شد.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تحلیل انجام نشد.");
@@ -121,7 +151,7 @@ export function FinancialAnalysisPanel({
         <h2>تحلیل رفتار مالی</h2>
       </div>
       <p className="muted">
-        نگاهی کوتاه به الگوها و محرک‌های احتمالی خرج‌کردن در این ماه.
+        بررسی الگوها و محرک‌های خرج‌کردن در این ماه.
       </p>
       <div className="analysis-actions">
         <button className="secondary" onClick={copy} disabled={!historyReady}>
@@ -135,6 +165,14 @@ export function FinancialAnalysisPanel({
           <Sparkles size={17} /> {busy ? "در حال تحلیل…" : "تحلیل با Gemini"}
         </button>
       </div>
+      {copied && (
+        <div className="analysis-copy-notice" role="status">
+          <span>پاسخ ایجنت خودتون رو وارد کنید تا برای آینده ثبت بشه.</span>
+          <button className="secondary" onClick={() => setManualOpen(true)}>
+            ثبت پاسخ ایجنت
+          </button>
+        </div>
+      )}
       {!apiKey && (
         <p className="muted">
           برای تحلیل درون برنامه، کلید Gemini را در تنظیمات ثبت کنید.
@@ -168,6 +206,64 @@ export function FinancialAnalysisPanel({
         </div>
       ) : (
         <p className="muted">هنوز تحلیلی برای این ماه ذخیره نشده است.</p>
+      )}
+      {manualOpen && createPortal(
+        <div
+          className="modal-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !manualSaving)
+              setManualOpen(false);
+          }}
+        >
+          <section
+            className="modal editor analysis-manual-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="ثبت پاسخ ایجنت"
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && !manualSaving) setManualOpen(false);
+            }}
+          >
+            <div className="modal-title">
+              <h2>ثبت پاسخ ایجنت</h2>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="بستن"
+                onClick={() => setManualOpen(false)}
+                disabled={manualSaving}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="muted">
+              پاسخ کامل ایجنت را اینجا جای‌گذاری کنید. این متن در تحلیل‌های ماه
+              {" "}{persianNumber(month)} سال {persianNumber(year)} ذخیره می‌شود و
+              برای مقایسهٔ ماه بعد هم در دسترس خواهد بود.
+            </p>
+            <label htmlFor="manual-analysis-text">پاسخ ایجنت</label>
+            <textarea
+              id="manual-analysis-text"
+              autoFocus
+              value={manualText}
+              onChange={(event) => {
+                setManualText(event.target.value);
+                setManualError("");
+              }}
+              placeholder="پاسخ ایجنت را اینجا جای‌گذاری کنید…"
+            />
+            {manualError && <p role="alert" className="analysis-manual-error">{manualError}</p>}
+            <button
+              type="button"
+              className="primary analysis-manual-save"
+              onClick={saveManual}
+              disabled={manualSaving}
+            >
+              {manualSaving ? "در حال ذخیره…" : "ذخیره تحلیل این ماه"}
+            </button>
+          </section>
+        </div>,
+        document.body,
       )}
     </section>
   );
