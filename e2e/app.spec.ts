@@ -1,4 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function chooseOption(page: Page, name: string, label: string) {
+  const trigger = page.getByRole("button", { name, exact: true });
+  await trigger.click();
+  const menu = page.getByRole("listbox", { name, exact: true });
+  await menu.getByRole("option", { name: label, exact: true }).click();
+  await expect(menu).toBeHidden();
+  await expect(trigger).toBeFocused();
+}
 
 test("empty start, create/edit/repeat/delete expense and search", async ({
   page,
@@ -9,9 +18,7 @@ test("empty start, create/edit/repeat/delete expense and search", async ({
   await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
   await page.getByLabel("مبلغ (تومان)").fill("12345");
   await expect(page.getByLabel("مبلغ (تومان)")).toHaveValue("۱۲٬۳۴۵");
-  await page
-    .getByRole("combobox", { name: "دسته" })
-    .selectOption({ label: "🍽️ خوراک" });
+  await chooseOption(page, "دسته", "🍽️ خوراک");
   await page.getByLabel("توضیحات و علت هزینه").fill("VPN تست");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
@@ -115,17 +122,13 @@ test("income and optional obligation transaction remain separate records", async
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "+ ثبت درآمد" }).click();
   await page.getByLabel("مبلغ (تومان)").fill("250000");
-  await page
-    .getByRole("combobox", { name: "دسته" })
-    .selectOption({ label: "💼 حقوق" });
+  await chooseOption(page, "دسته", "💼 حقوق");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تعهدات", exact: true }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "✓ انجام شد" }).first().click();
   await expect(page.getByRole("dialog", { name: "ثبت تراکنش" })).toBeVisible();
-  await page
-    .getByRole("combobox", { name: "دسته" })
-    .selectOption({ label: "🍽️ خوراک" });
+  await chooseOption(page, "دسته", "🍽️ خوراک");
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
   await expect(page.getByText("۸ نتیجه")).toBeVisible();
@@ -198,17 +201,11 @@ test("version, last used payment source and starred repeat shortcut", async ({
   await page.getByRole("button", { name: "بازگشت به خانه" }).click();
   await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
   await expect(
-    page
-      .getByRole("combobox", { name: "منبع پرداخت" })
-      .locator("option:checked"),
+    page.getByRole("button", { name: "منبع پرداخت", exact: true }),
   ).toHaveText("کارت روزمره");
-  await page
-    .getByRole("combobox", { name: "منبع پرداخت" })
-    .selectOption({ label: "کارت تازه" });
+  await chooseOption(page, "منبع پرداخت", "کارت تازه");
   await page.getByLabel("مبلغ (تومان)").fill("40000");
-  await page
-    .getByRole("combobox", { name: "دسته" })
-    .selectOption({ label: "🍽️ خوراک" });
+  await chooseOption(page, "دسته", "🍽️ خوراک");
   await page
     .getByRole("button", { name: "افزودن به تراکنش‌های پرتکرار" })
     .click();
@@ -218,9 +215,7 @@ test("version, last used payment source and starred repeat shortcut", async ({
   await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
   await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
   await expect(
-    page
-      .getByRole("combobox", { name: "منبع پرداخت" })
-      .locator("option:checked"),
+    page.getByRole("button", { name: "منبع پرداخت", exact: true }),
   ).toHaveText("کارت تازه");
   await page.getByRole("button", { name: "بستن", exact: true }).click();
   await page
@@ -228,12 +223,10 @@ test("version, last used payment source and starred repeat shortcut", async ({
     .click();
   await expect(page.getByLabel("مبلغ (تومان)")).toHaveValue("۴۰٬۰۰۰");
   await expect(
-    page.getByRole("combobox", { name: "دسته" }).locator("option:checked"),
+    page.getByRole("button", { name: "دسته", exact: true }),
   ).toHaveText("🍽️ خوراک");
   await expect(
-    page
-      .getByRole("combobox", { name: "منبع پرداخت" })
-      .locator("option:checked"),
+    page.getByRole("button", { name: "منبع پرداخت", exact: true }),
   ).toHaveText("کارت تازه");
   await expect(
     page.getByRole("button", { name: "افزودن به تراکنش‌های پرتکرار" }),
@@ -307,7 +300,7 @@ test("monthly behavior analysis persists and existing source gets a palette colo
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "تنظیمات" }).click();
   await page.getByLabel("کلید Gemini API").fill("test-key");
-  await page.getByRole("button", { name: "ذخیره کلید" }).click();
+  await page.getByRole("button", { name: "ذخیره تنظیمات تحلیل" }).click();
   const source = page.locator(".manage-row").filter({ hasText: "کارت روزمره" });
   await source.getByRole("button", { name: "ویرایش" }).click();
   await page.getByRole("button", { name: "رنگ ۴" }).click();
@@ -378,4 +371,54 @@ test("tab content fades through and reduced-motion stays usable", async ({
       .first()
       .evaluate((element) => getComputedStyle(element).animationName),
   ).toBe("none");
+});
+
+test("settings edit and remove a frequent shortcut while keeping the transaction", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /شروع با دفتر خالی/ }).click();
+  await page.getByRole("button", { name: "ثبت هزینه", exact: true }).click();
+  await page.getByLabel("مبلغ (تومان)").fill("40000");
+  await chooseOption(page, "دسته", "🍽️ خوراک");
+  await page.getByRole("button", { name: "افزودن به تراکنش‌های پرتکرار" }).click();
+  await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
+
+  await page.getByRole("button", { name: "تنظیمات", exact: true }).click();
+  const edit = page.getByRole("button", { name: "حذف از پرتکرارها" })
+    .locator("..").getByRole("button", { name: "ویرایش" });
+  await edit.click();
+  await page.getByLabel("مبلغ (تومان)").fill("55000");
+  await page.getByRole("button", { name: "ذخیره تراکنش" }).click();
+  await expect(page.getByRole("button", { name: "حذف از پرتکرارها" }).locator("../.."))
+    .toContainText("۵۵٬۰۰۰");
+  await page.getByRole("button", { name: "حذف از پرتکرارها" }).click();
+  await expect(page.getByText("هنوز تراکنش پرتکراری ثبت نشده است.")).toBeVisible();
+  await page.getByRole("button", { name: "تراکنش‌ها", exact: true }).click();
+  await expect(page.locator(".transaction-row").first()).toContainText("۵۵٬۰۰۰");
+});
+
+test("custom API sends OpenAI-compatible analysis and saves the response", async ({ page }) => {
+  await page.route("https://example.test/v1/chat/completions", async (route) => {
+    expect(route.request().method()).toBe("POST");
+    expect(route.request().headers().authorization).toBe("Bearer custom-test-key");
+    expect(route.request().postDataJSON()).toMatchObject({
+      model: "example/chat",
+      messages: [{ role: "user", content: expect.any(String) }],
+      stream: false,
+    });
+    await route.fulfill({
+      json: { choices: [{ message: { content: "تحلیل از API سفارشی" } }] },
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
+  await page.getByRole("button", { name: "تنظیمات", exact: true }).click();
+  await chooseOption(page, "ارائه‌دهندهٔ تحلیل", "API سفارشی (Custom API)");
+  await page.getByLabel("Base URL", { exact: true }).fill("https://example.test/v1/");
+  await page.getByLabel("شناسهٔ مدل (Model)").fill("example/chat");
+  await page.getByLabel("کلید API سفارشی").fill("custom-test-key");
+  await page.getByRole("button", { name: "ذخیره تنظیمات تحلیل" }).click();
+  await expect(page.getByText("تنظیمات تحلیل روی همین دستگاه ذخیره شد.")).toBeVisible();
+  await page.getByRole("button", { name: "گزارش‌ها", exact: true }).click();
+  await page.getByRole("button", { name: "تحلیل با API سفارشی" }).click();
+  await expect(page.getByText("تحلیل از API سفارشی", { exact: true })).toBeVisible();
 });

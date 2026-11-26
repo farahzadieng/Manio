@@ -2,16 +2,18 @@ import { Select } from "./Select";
 import { useState } from "react";
 import { Download, Upload, Sun, Moon, Monitor, RefreshCw } from "lucide-react";
 import { version as packageVersion } from "../../package.json";
-import { put, reset, initialize } from "../lib/db";
+import { get, put, reset, initialize } from "../lib/db";
 import {
   type Settings,
   type Category,
   type PaymentSource,
   type Transaction,
   localISO,
+  money,
   persianNumber,
 } from "../lib/domain";
 import { transactionCSV, download } from "../lib/backup";
+import { customAnalysisEndpoint } from "../lib/financial-analysis";
 import { seedDemo } from "../lib/demo";
 import { Section } from "./JournalPieces";
 const sourceColors = [
@@ -37,6 +39,8 @@ export function SettingsScreen({
   categories,
   sources,
   rows,
+  frequent,
+  onEditFrequent,
   save,
   refresh,
   onExport,
@@ -50,6 +54,8 @@ export function SettingsScreen({
   categories: Category[];
   sources: PaymentSource[];
   rows: Transaction[];
+  frequent: Transaction[];
+  onEditFrequent: (row: Transaction) => void;
   save: (s: Settings) => Promise<void>;
   refresh: () => Promise<void>;
   onExport: () => Promise<void>;
@@ -68,7 +74,15 @@ export function SettingsScreen({
   const [sourceName, setSourceName] = useState("");
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState(settings.geminiApiKey);
-  const [keySaved, setKeySaved] = useState(false);
+  const [provider, setProvider] = useState(settings.analysisProvider);
+  const [baseUrl, setBaseUrl] = useState(settings.customApiBaseUrl);
+  const [model, setModel] = useState(settings.customApiModel);
+  const [customKey, setCustomKey] = useState(settings.customApiKey);
+  const [apiMessage, setApiMessage] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [savingApi, setSavingApi] = useState(false);
+  const [removingFrequent, setRemovingFrequent] = useState<string | null>(null);
+  const [frequentError, setFrequentError] = useState("");
   const [sourceColor, setSourceColor] = useState("#285646");
   const [sourceKind, setSourceKind] = useState<PaymentSource["kind"]>("card");
   const [defaultNecessity, setDefaultNecessity] =
@@ -117,36 +131,154 @@ export function SettingsScreen({
         {updateMessage && <small role="status">{updateMessage}</small>}
       </div>
       <Section title="هوش مصنوعی" />
-      <div className="settings-card stack">
-        <label htmlFor="gemini-api-key">کلید Gemini API</label>
-        <input
-          id="gemini-api-key"
-          className="field"
-          type="password"
-          autoComplete="off"
-          value={apiKey}
-          onChange={(e) => {
-            setApiKey(e.target.value);
-            setKeySaved(false);
-          }}
-          placeholder="کلید خود را وارد کنید"
-        />
-        <button
-          onClick={async () => {
-            await save({ ...settings, geminiApiKey: apiKey.trim() });
-            setKeySaved(true);
+      <form
+        className="settings-card stack"
+        onChange={() => {
+          setApiMessage("");
+          setApiError("");
+        }}
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (savingApi) return;
+          setApiMessage("");
+          setApiError("");
+          if (provider === "custom") {
+            try {
+              customAnalysisEndpoint(baseUrl);
+              if (!model.trim() || !customKey.trim())
+                throw new Error("شناسهٔ مدل و کلید API سفارشی را وارد کنید.");
+            } catch (error) {
+              setApiError(error instanceof Error ? error.message : "تنظیمات API معتبر نیست.");
+              return;
+            }
+          }
+          setSavingApi(true);
+          try {
+            await save({
+              ...settings,
+              analysisProvider: provider,
+              geminiApiKey: apiKey.trim(),
+              customApiBaseUrl: baseUrl.trim(),
+              customApiModel: model.trim(),
+              customApiKey: customKey.trim(),
+            });
+            setApiMessage("تنظیمات تحلیل روی همین دستگاه ذخیره شد.");
+          } catch {
+            setApiError("ذخیره تنظیمات تحلیل ممکن نشد. دوباره تلاش کنید.");
+          } finally {
+            setSavingApi(false);
+          }
+        }}
+      >
+        <span>ارائه‌دهندهٔ تحلیل</span>
+        <Select
+          aria-label="ارائه‌دهندهٔ تحلیل"
+          value={provider}
+          onChange={(event) => {
+            setProvider(event.target.value === "custom" ? "custom" : "gemini");
+            setApiMessage("");
+            setApiError("");
           }}
         >
-          ذخیره کلید
-        </button>
-        {keySaved && (
-          <small role="status">کلید روی همین دستگاه ذخیره شد.</small>
+          <option value="gemini">Gemini</option>
+          <option value="custom">API سفارشی (Custom API)</option>
+        </Select>
+        {provider === "custom" ? (
+          <>
+            <label htmlFor="custom-api-base-url">Base URL</label>
+            <input
+              id="custom-api-base-url"
+              className="field"
+              dir="ltr"
+              type="url"
+              required
+              placeholder="https://iranrouter.net/api/v1"
+              value={baseUrl}
+              onChange={(event) => setBaseUrl(event.target.value)}
+            />
+            <label htmlFor="custom-api-model">شناسهٔ مدل (Model)</label>
+            <input
+              id="custom-api-model"
+              className="field"
+              dir="ltr"
+              required
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+            />
+            <label htmlFor="custom-api-key">کلید API سفارشی</label>
+            <input
+              id="custom-api-key"
+              className="field"
+              dir="ltr"
+              type="password"
+              autoComplete="off"
+              required
+              value={customKey}
+              onChange={(event) => setCustomKey(event.target.value)}
+            />
+            <small>سرویس باید درخواست OpenAI-compatible را از مرورگر بپذیرد (CORS).</small>
+          </>
+        ) : (
+          <>
+            <label htmlFor="gemini-api-key">کلید Gemini API</label>
+            <input
+              id="gemini-api-key"
+              className="field"
+              dir="ltr"
+              type="password"
+              autoComplete="off"
+              value={apiKey}
+              onChange={(event) => setApiKey(event.target.value)}
+            />
+          </>
         )}
-        <small>
-          کلید در پشتیبان JSON قرار نمی‌گیرد. هنگام تحلیل، کلید و داده‌های هزینه
-          مستقیماً به Gemini ارسال می‌شوند. برنامه از Gemini 2.5 Flash استفاده می‌کند
-          و هنگام شلوغی سرویس، Flash-Lite را هم امتحان می‌کند.
-        </small>
+        <button type="submit" disabled={savingApi}>
+          {savingApi ? "در حال ذخیره…" : "ذخیره تنظیمات تحلیل"}
+        </button>
+        {apiError && <small className="error" role="alert">{apiError}</small>}
+        {apiMessage && <small role="status">{apiMessage}</small>}
+        <small>کلیدها روی همین دستگاه ذخیره می‌شوند و در فایل پشتیبان قرار نمی‌گیرند.</small>
+      </form>
+      <Section title="تراکنش‌های پرتکرار" />
+      <div className="settings-card">
+        {!frequent.length && <small>هنوز تراکنش پرتکراری ثبت نشده است.</small>}
+        {frequent.map((row) => (
+          <div className="manage-row" key={row.id}>
+            <span>
+              {row.categoryEmoji} {row.categoryName} · {money(row.amountTomans)}
+              {row.note && <small className="frequent-note">{row.note}</small>}
+            </span>
+            <span className="manage-actions">
+              <button disabled={removingFrequent !== null} onClick={() => onEditFrequent(row)}>
+                ویرایش
+              </button>
+              <button
+                disabled={removingFrequent !== null}
+                onClick={async () => {
+                  setRemovingFrequent(row.id);
+                  setFrequentError("");
+                  try {
+                    const current = await get("transactions", row.id);
+                    if (current?.starred)
+                      await put("transactions", {
+                        ...current,
+                        starred: false,
+                        updatedAt: new Date().toISOString(),
+                      });
+                    await refresh();
+                  } catch {
+                    setFrequentError("حذف از پرتکرارها ممکن نشد. دوباره تلاش کنید.");
+                  } finally {
+                    setRemovingFrequent(null);
+                  }
+                }}
+              >
+                حذف از پرتکرارها
+              </button>
+            </span>
+          </div>
+        ))}
+        {frequentError && <small className="error" role="alert">{frequentError}</small>}
       </div>
       <Section title="دسته‌ها" />
       <div className="settings-card">

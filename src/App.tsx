@@ -313,8 +313,7 @@ function App() {
     });
   const frequent = rows
     .filter((t) => t.starred)
-    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    .slice(0, 5);
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   const saveSetting = async (next: Settings) => {
     await put("settings", next);
     setSettings(next);
@@ -437,7 +436,7 @@ function App() {
               summary={summary}
               rows={rows}
               obligations={obligations}
-              frequent={frequent}
+              frequent={frequent.slice(0, 5)}
               changeMonth={changeMonth}
               setEditor={setEditor}
               setTab={setTab}
@@ -477,7 +476,7 @@ function App() {
               setFilters={setFilters}
               setTab={setTab}
               reportMonth={month}
-              geminiApiKey={settings.geminiApiKey}
+              settings={settings}
             />
           )}
           {tab === "obligations" && (
@@ -501,6 +500,8 @@ function App() {
               categories={categories}
               sources={sources}
               rows={rows}
+              frequent={frequent}
+              onEditFrequent={(row) => setEditor({ kind: row.kind, row })}
               save={saveSetting}
               refresh={refresh}
               onExport={exportData}

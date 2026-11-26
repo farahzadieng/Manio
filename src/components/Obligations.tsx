@@ -237,9 +237,10 @@ export function ObligationEditor({
             <X />
           </button>
         </div>
-        <label>
-          نوع
+        <div className="editor-select-field">
+          <span>نوع</span>
           <Select
+            aria-label="نوع"
             value={type}
             onChange={(e) => setType(e.target.value as Obligation["type"])}
           >
@@ -248,7 +249,7 @@ export function ObligationEditor({
             <option value="plannedPayment">پرداخت برنامه‌ریزی‌شده</option>
             <option value="reminder">یادآوری مالی</option>
           </Select>
-        </label>
+        </div>
         <label>
           عنوان
           <input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -266,9 +267,10 @@ export function ObligationEditor({
         </label>
         <DatePicker value={date} onChange={setDate} label="موعد" />
         {!initial && (
-          <label>
-            تکرار
+          <div className="editor-select-field">
+            <span>تکرار</span>
             <Select
+              aria-label="تکرار"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as typeof frequency)}
             >
@@ -278,7 +280,7 @@ export function ObligationEditor({
               <option value="monthly">ماهانه شمسی</option>
               <option value="yearly">سالانه شمسی</option>
             </Select>
-          </label>
+          </div>
         )}
         <label>
           یادداشت

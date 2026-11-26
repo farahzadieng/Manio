@@ -574,7 +574,10 @@ textarea:focus-visible {
   flex-direction: column;
   gap: 8px;
 }
-.settings-card.stack button,
+.settings-card.stack > .custom-select {
+  flex: none;
+}
+.settings-card.stack > button,
 .file-label {
   border: 1px solid var(--border);
   background: var(--bg);
@@ -760,7 +763,8 @@ textarea:focus-visible {
   justify-content: space-between;
   align-items: center;
 }
-.editor label {
+.editor label,
+.editor-select-field {
   display: block;
   font-size: 13px;
   font-weight: 600;
@@ -1072,14 +1076,6 @@ textarea:focus-visible {
   flex: 1 1 100px;
   min-width: 0;
 }
-.select-native {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-}
 .select-trigger {
   width: 100%;
   min-height: 47px;
@@ -1181,7 +1177,7 @@ textarea:focus-visible {
 .inline-form .select-trigger {
   background: var(--bg);
 }
-.editor label .custom-select {
+.editor-select-field .custom-select {
   margin-top: 7px;
 }
 .source-palette {
@@ -1306,4 +1302,9 @@ textarea:focus-visible {
   align-self: center;
   color: var(--muted);
   font-size: 13px;
+}
+
+.frequent-note {
+  display: block;
+  overflow-wrap: anywhere;
 }

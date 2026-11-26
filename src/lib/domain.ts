@@ -91,6 +91,10 @@ export const settingsSchema = z.object({
     .default(null),
   currency: z.literal("toman"),
   geminiApiKey: z.string().default(""),
+  analysisProvider: z.enum(["gemini", "custom"]).default("gemini"),
+  customApiBaseUrl: z.string().default(""),
+  customApiModel: z.string().default(""),
+  customApiKey: z.string().default(""),
 });
 export const analysisSchema = z.object({
   ...base,

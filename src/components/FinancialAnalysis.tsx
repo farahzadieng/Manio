@@ -5,6 +5,7 @@ import { all, put } from "../lib/db";
 import {
   type FinancialAnalysis,
   type Transaction,
+  type Settings,
   filterTransactions,
   jalaliMonthRange,
   persianNumber,
@@ -14,22 +15,27 @@ import {
   buildFinancialPrompt,
   previousJalaliMonth,
   requestFinancialAnalysis,
+  requestCustomFinancialAnalysis,
 } from "../lib/financial-analysis";
 
 export function FinancialAnalysisPanel({
   rows,
   year,
   month,
-  apiKey,
+  settings,
   onOpenSettings,
 }: {
   rows: Transaction[];
   year: number;
   month: number;
-  apiKey: string;
+  settings: Settings;
   onOpenSettings: () => void;
 }) {
   const key = analysisMonth(year, month);
+  const custom = settings.analysisProvider === "custom";
+  const configured = custom
+    ? Boolean(settings.customApiBaseUrl && settings.customApiModel && settings.customApiKey)
+    : Boolean(settings.geminiApiKey.trim());
   const [history, setHistory] = useState<FinancialAnalysis[]>([]);
   const [historyReady, setHistoryReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -128,7 +134,7 @@ export function FinancialAnalysisPanel({
     }
   };
   const analyze = async () => {
-    if (!apiKey.trim()) {
+    if (!configured) {
       onOpenSettings();
       return;
     }
@@ -136,7 +142,9 @@ export function FinancialAnalysisPanel({
     setBusy(true);
     setMessage("");
     try {
-      const text = await requestFinancialAnalysis(prompt, apiKey.trim());
+      const text = custom
+        ? await requestCustomFinancialAnalysis(prompt, settings)
+        : await requestFinancialAnalysis(prompt, settings.geminiApiKey.trim());
       await saveAnalysis(text);
       setMessage("تحلیل تازه ذخیره شد.");
     } catch (error) {
@@ -162,7 +170,7 @@ export function FinancialAnalysisPanel({
           onClick={analyze}
           disabled={busy || !historyReady}
         >
-          <Sparkles size={17} /> {busy ? "در حال تحلیل…" : "تحلیل با Gemini"}
+          <Sparkles size={17} /> {busy ? "در حال تحلیل…" : custom ? "تحلیل با API سفارشی" : "تحلیل با Gemini"}
         </button>
       </div>
       {copied && (
@@ -173,15 +181,15 @@ export function FinancialAnalysisPanel({
           </button>
         </div>
       )}
-      {!apiKey && (
+      {!configured && (
         <p className="muted">
-          برای تحلیل درون برنامه، کلید Gemini را در تنظیمات ثبت کنید.
+          برای تحلیل درون برنامه، اطلاعات ارائه‌دهنده را در تنظیمات ثبت کنید.
         </p>
       )}
       <p className="muted tiny">
-        برای Gemini، هزینه‌های این ماه و ماه قبل و در صورت وجود، آخرین تحلیل ماه
-        قبل مستقیماً به Google ارسال می‌شوند. تحلیل‌های دریافتی روی
-        همین دستگاه ذخیره می‌شوند.
+        هزینه‌های این ماه و ماه قبل و در صورت وجود، آخرین تحلیل ماه قبل
+        مستقیماً به {custom ? "سرویس API سفارشی" : "Google"} ارسال می‌شوند.
+        تحلیل‌های دریافتی روی همین دستگاه ذخیره می‌شوند.
       </p>
       {message && (
         <p role="status" className="analysis-message">

@@ -165,9 +165,10 @@ export function TransactionEditor({
             placeholder="مثلاً ۱۲۵٬۰۰۰"
           />
         </label>
-        <label>
-          دسته
+        <div className="editor-select-field">
+          <span>دسته</span>
           <Select
+            aria-label="دسته"
             value={categoryId}
             onChange={(e) => {
               setCategoryId(e.target.value);
@@ -184,10 +185,11 @@ export function TransactionEditor({
               </option>
             ))}
           </Select>
-        </label>
-        <label>
-          {kind === "expense" ? "منبع پرداخت" : "دریافت در (اختیاری)"}
+        </div>
+        <div className="editor-select-field">
+          <span>{kind === "expense" ? "منبع پرداخت" : "دریافت در (اختیاری)"}</span>
           <Select
+            aria-label={kind === "expense" ? "منبع پرداخت" : "دریافت در (اختیاری)"}
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
           >
@@ -200,18 +202,19 @@ export function TransactionEditor({
                 </option>
               ))}
           </Select>
-        </label>
+        </div>
         {kind === "expense" && (
-          <label>
-            ضرورت
+          <div className="editor-select-field">
+            <span>ضرورت</span>
             <Select
+              aria-label="ضرورت"
               value={necessity}
               onChange={(e) => setNecessity(e.target.value as typeof necessity)}
             >
               <option value="necessary">ضروری</option>
               <option value="nonessential">غیرضروری</option>
             </Select>
-          </label>
+          </div>
         )}
         <button
           type="button"

@@ -107,13 +107,14 @@ export function Select({
     root.current?.querySelector<HTMLButtonElement>(".select-trigger")?.focus();
   };
   const keyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && open) {
+      event.stopPropagation();
       setOpen(false);
       return;
     }
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      if (open) choose(options[focus]);
+      if (open && options[focus]) choose(options[focus]);
       else {
         setFocus(
           Math.max(
@@ -139,14 +140,6 @@ export function Select({
   };
   return (
     <div className="custom-select" ref={root}>
-      <select
-        className="select-native"
-        aria-label={ariaLabel}
-        value={value}
-        onChange={onChange}
-      >
-        {children}
-      </select>
       <button
         type="button"
         className="select-trigger"

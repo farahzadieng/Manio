@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { FinancialAnalysisPanel } from "../components/FinancialAnalysis";
 import {
   type Transaction,
+  type Settings,
   type Category,
   type PaymentSource,
   type Filters,
@@ -38,7 +39,7 @@ export function ReportsScreen({
   setFilters,
   setTab,
   reportMonth,
-  geminiApiKey,
+  settings,
 }: {
   reportPeriod: ReportPeriod;
   setReportPeriod: (value: ReportPeriod) => void;
@@ -61,7 +62,7 @@ export function ReportsScreen({
   setFilters: (value: Filters) => void;
   setTab: (value: Tab) => void;
   reportMonth: JalaliMonth;
-  geminiApiKey: string;
+  settings: Settings;
 }) {
   return (
     <>
@@ -318,7 +319,7 @@ export function ReportsScreen({
           rows={rows}
           year={reportMonth.y}
           month={reportMonth.m}
-          apiKey={geminiApiKey}
+          settings={settings}
           onOpenSettings={() => setTab("settings")}
         />
       )}

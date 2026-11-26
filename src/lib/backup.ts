@@ -26,7 +26,7 @@ export async function exportBackup(): Promise<Backup> {
   const data = {} as Backup["data"];
   for (const name of stores)
     (data as Record<TableName, Tables[TableName][]>)[name] = await all(name);
-  data.settings = data.settings.map((s) => ({ ...s, geminiApiKey: "" }));
+  data.settings = data.settings.map((s) => ({ ...s, geminiApiKey: "", customApiKey: "" }));
   return {
     format: "manio-backup",
     version: 1,
@@ -36,7 +36,7 @@ export async function exportBackup(): Promise<Backup> {
 }
 export function validateBackup(raw: unknown): Backup {
   const b = backupSchema.parse(raw);
-  b.data.settings = b.data.settings.map((s) => ({ ...s, geminiApiKey: "" }));
+  b.data.settings = b.data.settings.map((s) => ({ ...s, geminiApiKey: "", customApiKey: "" }));
   if (b.data.metadata[0]?.schemaVersion > DB_VERSION)
     throw new Error("نسخه داده‌ها جدیدتر از برنامه است");
   if (b.data.settings.length !== 1 || b.data.metadata.length !== 1)

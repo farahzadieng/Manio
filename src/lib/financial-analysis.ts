@@ -178,3 +178,74 @@ export async function requestFinancialAnalysis(
       : "مدل‌های Gemini فعلاً شلوغ‌اند. کمی بعد دوباره تلاش کنید یا پاسخ ایجنت خودتان را دستی ثبت کنید.",
   );
 }
+
+export function customAnalysisEndpoint(baseUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(baseUrl.trim());
+  } catch {
+    throw new Error("یک Base URL معتبر با HTTPS وارد کنید.");
+  }
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash
+  )
+    throw new Error("یک Base URL معتبر با HTTPS وارد کنید.");
+  url.pathname = url.pathname.replace(/\/+$/, "") + "/chat/completions";
+  return url.href;
+}
+
+export async function requestCustomFinancialAnalysis(
+  prompt: string,
+  { customApiBaseUrl, customApiModel, customApiKey }: {
+    customApiBaseUrl: string;
+    customApiModel: string;
+    customApiKey: string;
+  },
+): Promise<string> {
+  const endpoint = customAnalysisEndpoint(customApiBaseUrl);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${customApiKey}`,
+      },
+      body: JSON.stringify({
+        model: customApiModel,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 4096,
+        stream: false,
+      }),
+      redirect: "error",
+      signal: AbortSignal.timeout(120_000),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError")
+      throw new Error("زمان انتظار برای پاسخ API سفارشی تمام شد. دوباره تلاش کنید.");
+    throw new Error("ارتباط با API سفارشی برقرار نشد. نشانی، اتصال اینترنت و پشتیبانی سرویس از CORS را بررسی کنید.");
+  }
+  if (!response.ok) {
+    if ([401, 403].includes(response.status))
+      throw new Error("کلید API سفارشی و دسترسی آن به مدل را بررسی کنید.");
+    if ([400, 404].includes(response.status))
+      throw new Error(`API سفارشی درخواست را نپذیرفت (خطای ${response.status}). Base URL و شناسهٔ مدل را بررسی کنید.`);
+    if ([402, 429].includes(response.status))
+      throw new Error(`اعتبار یا محدودیت درخواست‌های API سفارشی را بررسی کنید (خطای ${response.status}).`);
+    throw new Error(`API سفارشی پاسخ موفق نداد (خطای ${response.status}).`);
+  }
+  const data = (await response.json().catch(() => null)) as {
+    choices?: Array<{ message?: { content?: unknown }; finish_reason?: string }>;
+  } | null;
+  const choice = data?.choices?.[0];
+  if (choice?.finish_reason === "length")
+    throw new Error("پاسخ API سفارشی به محدودیت طول رسید. مدل دیگری را در تنظیمات امتحان کنید.");
+  const content = choice?.message?.content;
+  if (typeof content !== "string" || !content.trim())
+    throw new Error("API سفارشی پاسخ متنی تولید نکرد.");
+  return content.trim();
+}

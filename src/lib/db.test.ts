@@ -40,8 +40,12 @@ describe("storage and backup", () => {
       open.onerror = () => reject(open.error);
     });
     const upgraded = await db();
-    expect(upgraded.version).toBe(5);
-    expect((await get("settings", "main"))?.theme).toBe("dark");
+    expect(upgraded.version).toBe(6);
+    expect(await get("settings", "main")).toMatchObject({
+      theme: "dark",
+      analysisProvider: "gemini",
+      customApiKey: "",
+    });
     expect(upgraded.objectStoreNames.contains("transactions")).toBe(true);
   });
   it("migrates version-two transactions to unstarred without losing them", async () => {
@@ -127,9 +131,14 @@ describe("storage and backup", () => {
     await reset();
     expect(await all("settings")).toEqual([]);
   });
-  it("keeps monthly analyses but excludes the Gemini key from backups", async () => {
+  it("keeps monthly analyses but excludes both API keys from backups", async () => {
     const settings = (await get("settings", "main"))!;
-    await put("settings", { ...settings, geminiApiKey: "private-test-key" });
+    await put("settings", {
+      ...settings,
+      geminiApiKey: "private-test-key",
+      customApiKey: "private-custom-key",
+      analysisProvider: "custom",
+    });
     await put("analyses", {
       id: crypto.randomUUID(),
       month: "1405-08",
@@ -140,9 +149,12 @@ describe("storage and backup", () => {
     });
     const backup = await exportBackup();
     expect(backup.data.settings[0].geminiApiKey).toBe("");
+    expect(backup.data.settings[0].customApiKey).toBe("");
+    backup.data.settings[0].customApiKey = "imported-secret";
     expect(backup.data.analyses).toHaveLength(1);
     await importBackup(backup, "replace");
     expect((await get("settings", "main"))?.geminiApiKey).toBe("");
+    expect((await get("settings", "main"))?.customApiKey).toBe("");
     expect(await all("analyses")).toHaveLength(1);
   });
   it("loads demo once, with searchable notes and multiple months", async () => {
@@ -184,6 +196,6 @@ describe("storage and backup", () => {
     expect(
       (await all("transactions")).every((row) => row.starred === false),
     ).toBe(true);
-    expect((await get("metadata", "main"))?.schemaVersion).toBe(5);
+    expect((await get("metadata", "main"))?.schemaVersion).toBe(6);
   });
 });

@@ -1,12 +1,12 @@
 import {
   schemas,
+  settingsSchema,
   type Tables,
   type TableName,
   type Metadata,
-  type Settings,
 } from "./domain";
 const NAME = "manio-local";
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 export const stores: TableName[] = [
   "paymentSources",
   "categories",
@@ -49,20 +49,17 @@ export function db(): Promise<IDBDatabase> {
             current.continue();
           };
         }
-        if (event.oldVersion < 5) {
+        if (event.oldVersion < 6) {
           const settings = tx.objectStore("settings");
           const cursor = settings.openCursor();
           cursor.onsuccess = () => {
             const current = cursor.result;
             if (!current) return;
-            current.update({
-              ...current.value,
-              lastBackupReminderMonth:
-                current.value.lastBackupReminderMonth ?? null,
-              geminiApiKey: current.value.geminiApiKey ?? "",
-            });
+            current.update(settingsSchema.parse(current.value));
             current.continue();
           };
+        }
+        if (event.oldVersion < 5) {
           const sources = tx.objectStore("paymentSources");
           const sourceCursor = sources.openCursor();
           sourceCursor.onsuccess = () => {
@@ -147,7 +144,7 @@ export async function reset() {
 export async function initialize() {
   const s = await get("settings", "main");
   if (!s) {
-    const settings: Settings = {
+    const settings = settingsSchema.parse({
       id: "main",
       theme: "system",
       onboarded: false,
@@ -155,8 +152,7 @@ export async function initialize() {
       lastBackupAt: null,
       lastBackupReminderMonth: null,
       currency: "toman",
-      geminiApiKey: "",
-    };
+    });
     await put("settings", settings);
   }
   const m = await get("metadata", "main");
