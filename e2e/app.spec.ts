@@ -191,7 +191,7 @@ test("version, last used payment source and starred repeat shortcut", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "دیدن داده‌های نمونه" }).click();
   await page.getByRole("button", { name: "تنظیمات" }).click();
-  await expect(page.getByText("نسخه برنامه:")).toContainText("۲٫۱");
+  await expect(page.getByText("نسخه برنامه:")).toContainText("۲٫۵");
   await page.getByLabel("نام منبع تازه").fill("کارت تازه");
   await page
     .locator(".inline-form")
