@@ -103,3 +103,42 @@ test("settings can manually request an update check", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText("بررسی انجام شد");
   await expect(page.getByRole("heading", { name: "تنظیمات" })).toBeVisible();
 });
+
+test("PWA install assets follow the phone color scheme", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+
+  const manifestLink = page.locator('link[rel="manifest"]');
+  const favicon = page.locator('link[rel="icon"]');
+  await expect(favicon).toHaveAttribute(
+    "href",
+    "/icons/manio-fullbleed-dark-192.png",
+  );
+  const touchIcon = page.locator('link[rel="apple-touch-icon"]');
+  await expect(manifestLink).toHaveAttribute(
+    "href",
+    "/manifest-dark.webmanifest",
+  );
+  await expect(touchIcon).toHaveAttribute(
+    "href",
+    "/icons/apple-touch-icon-fullbleed-dark-180.png",
+  );
+
+  const session = await page.context().newCDPSession(page);
+  const { manifest } = await session.send("Page.getAppManifest");
+  expect(manifest?.icons?.map((icon) => new URL(icon.url).pathname)).toEqual([
+    "/icons/manio-fullbleed-dark-192.png",
+    "/icons/manio-fullbleed-dark-512.png",
+  ]);
+
+  await page.emulateMedia({ colorScheme: "light" });
+  await expect(favicon).toHaveAttribute(
+    "href",
+    "/icons/manio-fullbleed-192.png",
+  );
+  await expect(manifestLink).toHaveAttribute("href", "/manifest.webmanifest");
+  await expect(touchIcon).toHaveAttribute(
+    "href",
+    "/icons/apple-touch-icon-fullbleed-180.png",
+  );
+});

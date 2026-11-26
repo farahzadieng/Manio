@@ -188,16 +188,31 @@ function App() {
     };
   }, [refresh]);
   useEffect(() => {
-    const theme =
-      settings?.theme === "system"
-        ? matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light"
-        : settings?.theme || "light";
-    document.documentElement.dataset.theme = theme;
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "dark" ? "#15211C" : "#F8F6F1");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = () => {
+      const preference = settings?.theme ?? "system";
+      const theme =
+        preference === "system"
+          ? systemDark.matches
+            ? "dark"
+            : "light"
+          : preference;
+      document.documentElement.dataset.theme = theme;
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", theme === "dark" ? "#15211C" : "#F8F6F1");
+      document
+        .querySelector<HTMLLinkElement>('link[rel="icon"]')
+        ?.setAttribute(
+          "href",
+          theme === "dark"
+            ? "/icons/manio-fullbleed-dark-192.png"
+            : "/icons/manio-fullbleed-192.png",
+        );
+    };
+    syncTheme();
+    systemDark.addEventListener("change", syncTheme);
+    return () => systemDark.removeEventListener("change", syncTheme);
   }, [settings?.theme]);
   useEffect(() => {
     if (!settings?.onboarded) return;
